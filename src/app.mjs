@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check, hex } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { catalog, lineKey, pageKey, programKey } from './rom.mjs';
@@ -163,7 +165,9 @@ function render() {
   $('#rom-name').hidden = !ready;
   $('#workspace').hidden = !ready;
   $('#export-rom').hidden = !ready;
-  document.querySelectorAll('.menu-items [data-needs-rom]').forEach(node => { node.hidden = !ready; });
+  document.querySelectorAll('.menu-items [data-needs-rom]').forEach(node => {
+    node.hidden = !ready || (node.hasAttribute('data-retail-only') && state.rom.profile !== PROFILE.id);
+  });
   if (!ready) return;
   $('#rom-name').textContent = state.name;
   renderList();
@@ -200,7 +204,12 @@ function renderAuthoredSteps(steps) {
   for (const step of steps) {
     const item = el('li');
     if (step.type === 'say') item.textContent = step.speaker ? `${step.speaker} · ${step.text}` : step.text;
-    else {
+    else if (step.type === 'enemyHp') item.textContent = tr`设置 ${step.enemy} 的 HP 为 ${step.hp}`;
+    else if (step.type === 'choose') {
+      const prompt = el('p', step.prompt, 'dialogue-preview');
+      item.append(prompt, el('strong', step.first.label), renderAuthoredSteps(step.first.steps),
+        el('strong', step.second.label), renderAuthoredSteps(step.second.steps));
+    } else {
       item.append(el('strong', tr`若 ${step.flag} 已设定`), renderAuthoredSteps(step.then));
       if (step.else?.length) item.append(el('strong', t('否则')), renderAuthoredSteps(step.else));
     }
@@ -790,6 +799,14 @@ const tabs = panels.list.map(panel => {
   $(panel.secondary ? '#extra-tabs' : '#workspace-tabs').append(element);
   return { panel, element };
 });
+$('#patch-options').onclick = () => {
+  const choice = el('input');
+  choice.type = 'checkbox';
+  choice.checked = state.project.patches?.storyChoices === true;
+  dialog(t('补丁选项'), [field(t('剧情选择与敌人 HP'), choice)], () => {
+    commit({ ...state.project, patches: { ...state.project.patches, storyChoices: choice.checked } });
+  });
+};
 $('#agent').onclick = () => dialog(t('Agent 数据交换'), [
   el('p', t('场景目录供检索和定位。项目 JSON 记录改动，差异报告包含 ROM 写入范围。'), 'note'),
   button(t('导出场景目录'), () => downloadJson('ffta.scene.catalog.json', catalog(state.rom))),

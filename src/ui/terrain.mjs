@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 // Original isometric diorama drawn at integer coordinates for the opening screen.
 const ground = ['#6d8151', '#829059', '#778950', '#949b5d'];
 const gravel = ['#aa9567', '#b3a26b', '#bfa879'];

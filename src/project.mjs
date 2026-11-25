@@ -1,10 +1,14 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { PROFILE } from './profile.mjs';
+import { lowerVmInstruction } from './vm-instructions.mjs';
 import { align, check, concat, digest, eq, integer, put16, put32, u16, u32 } from './binary.mjs';
 import { decodeInstructions, lineKey, openUSRom, pageKey, programKey } from './rom.mjs';
 import { encodeLine, makePage, plainTokens, preview } from './text.mjs';
 import { lowerOpening, OPENING_BANNER, OPENING_ID, OPENING_OUTCOME, OPENING_ROSTER } from './opening.mjs';
 import { appendBeforeDialogue, insertDialogue } from './insertion.mjs';
 import { lowerStoryEdits } from './authoring.mjs';
+import { STORY_VM_TABLE, storyRuntimeCode, storyVmDescriptors } from './story-runtime.mjs';
 import { BATTLE_EVENT_CAPABILITIES, validateBattleEvent } from './battle.mjs';
 
 export const FORMAT = 'ffta.scene-project/v1';
@@ -32,6 +36,7 @@ function compareKeys(a, b) {
 
 function compileInstructions(commands, specs, original) {
   check(Array.isArray(commands) && commands.length > 0 && commands.length <= 32767, 'Invalid instruction list');
+  commands = commands.map(lowerVmInstruction);
   const byName = new Map([...specs.values()].filter(spec => spec.operands).map(spec => [spec.operation, spec]));
   const offsets = new Set();
   const branches = [];
@@ -89,12 +94,17 @@ function compileInstructions(commands, specs, original) {
 }
 
 export function plan(rom, project) {
-  fields(project, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits'], 'project');
+  fields(project, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits', 'patches'], 'project');
   check(project.format === FORMAT && project.profile === rom.profile && project.baseSha256 === rom.sha256, 'Project base ROM/profile mismatch');
   if (rom.profile !== PROFILE.id) {
     check(!collection(project.openings ?? {}, 'openings').length &&
       !collection(project.battleEvents ?? {}, 'battleEvents').length,
     'Opening replacement and battle diagnostics require the verified retail profile');
+  }
+  if (project.patches !== undefined) {
+    fields(project.patches, ['storyChoices'], 'patch options');
+    check(!Object.hasOwn(project.patches, 'storyChoices') || typeof project.patches.storyChoices === 'boolean',
+      'The Story Choices patch option must be a boolean');
   }
   const authored = lowerOpening(rom, project);
   const authoredStories = lowerStoryEdits(rom, authored.project);
@@ -208,7 +218,7 @@ export function plan(rom, project) {
       check(linked.insertions.every(event => event.textSelector < count), `Inserted dialogue in scene ${scene.id} references an absent line in page ${key}`);
     }
   }
-  return { scenes, programs, dialogue, pages, battles, diffs, storyEdits: authoredStories.changes, openingRoster: authored.roster, openingOutcome: authored.outcome };
+  return { scenes, programs, dialogue, pages, battles, diffs, storyEdits: authoredStories.changes, storyRuntime: authoredStories.usesRuntime, openingRoster: authored.roster, openingOutcome: authored.outcome };
 }
 
 function capacity(required) {
@@ -238,6 +248,11 @@ function buildRom(rom, project, updateOpeningBanner) {
   }
   function redirect(table, offset, kind) {
     pointers.push({ kind, offset: table.pointer, before: PROFILE.bus + table.start, after: PROFILE.bus + offset });
+  }
+  if (change.storyRuntime) {
+    const code = allocate('storyRuntime', 'story-choices', storyRuntimeCode);
+    const table = storyVmDescriptors(rom, PROFILE.bus + code);
+    redirect(STORY_VM_TABLE, allocate('sceneVmDescriptors', 'scene-vm', table), 'sceneVmDescriptors');
   }
   if (change.openingRoster) {
     redirect(OPENING_ROSTER, allocate('encounterRoster', OPENING_ID, change.openingRoster), 'encounterRoster');
@@ -323,7 +338,7 @@ export async function openRom(bytes) {
   check(start >= PROFILE.size && size > 0 && start + size <= trailer, 'Invalid project metadata range');
   const project = JSON.parse(decoder.decode(bytes.subarray(start, start + size)));
   const base = Uint8Array.from(bytes.subarray(0, PROFILE.size));
-  for (const table of [PROFILE.index, PROFILE.scripts, PROFILE.dialogue]) put32(base, table.pointer, PROFILE.bus + table.start);
+  for (const table of [PROFILE.index, PROFILE.scripts, PROFILE.dialogue, STORY_VM_TABLE]) put32(base, table.pointer, PROFILE.bus + table.start);
   const updatedOpeningBanner = u32(base, OPENING_BANNER.pointer) !== PROFILE.bus + OPENING_BANNER.start;
   if (project.openings?.[OPENING_ID]) {
     for (const table of [OPENING_ROSTER, OPENING_OUTCOME, OPENING_BANNER]) put32(base, table.pointer, PROFILE.bus + table.start);
@@ -362,7 +377,7 @@ export function previewBuild(rom, project) {
 /** Merge explicit fields by resource key; validate the entire candidate before committing. */
 export function importProject(rom, current, incoming, mode = 'merge') {
   check(mode === 'merge' || mode === 'replace', 'Unknown import mode');
-  fields(incoming, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits'], 'import');
+  fields(incoming, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits', 'patches'], 'import');
   check(incoming.format === FORMAT && incoming.profile === rom.profile && incoming.baseSha256 === rom.sha256, 'Import base ROM/profile mismatch');
   const result = newProject(rom);
   for (const key of ['scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings']) {
@@ -372,6 +387,10 @@ export function importProject(rom, current, incoming, mode = 'merge') {
   if (incoming.storyEdits !== undefined || (mode === 'merge' && current.storyEdits !== undefined)) {
     const edits = Object.fromEntries(collection(incoming.storyEdits ?? {}, 'storyEdits'));
     result.storyEdits = mode === 'merge' ? { ...current.storyEdits, ...edits } : edits;
+  }
+  if (incoming.patches !== undefined || (mode === 'merge' && current.patches !== undefined)) {
+    const patches = Object.fromEntries(collection(incoming.patches ?? {}, 'patches'));
+    result.patches = mode === 'merge' ? { ...current.patches, ...patches } : patches;
   }
   plan(rom, result);
   return result;

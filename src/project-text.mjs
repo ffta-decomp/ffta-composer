@@ -1,4 +1,7 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check } from './binary.mjs';
+import { VM_INSTRUCTIONS, vmInstruction } from './vm-instructions.mjs';
 
 const maxDepth = 128;
 const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -8,6 +11,9 @@ const constructors = {
   say: { fixed: { type: 'say' }, fields: ['text', 'speaker'], required: 1 },
   sayAs: { fixed: { type: 'say' }, fields: ['speaker', 'text'], required: 2 },
   when: { fixed: { type: 'if' }, fields: ['flag', 'then', 'else'], required: 2 },
+  choose: { fixed: { type: 'choose' }, fields: ['prompt', 'first', 'second'], required: 3 },
+  option: { fixed: {}, fields: ['label', 'steps'], required: 2 },
+  enemyHp: { fixed: { type: 'enemyHp' }, fields: ['enemy', 'hp'], required: 2 },
   op: { fixed: {}, fields: ['operation', 'operands'], required: 2 },
   native: { fixed: { operation: 'native' }, fields: ['opcode', 'operands'], required: 2 },
   glyph: { fixed: { kind: 'glyph' }, fields: ['code', 'width'], required: 2 },
@@ -18,6 +24,8 @@ const constructors = {
 const simpleEscapes = {
   a: '\x07', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v', '\\': '\\', '"': '"', "'": "'",
 };
+
+const vmConstructors = new Map(VM_INSTRUCTIONS.map(row => [row.name, row]));
 
 function isName(value) {
   return identifier.test(value) && !keywords.has(value);
@@ -128,10 +136,11 @@ function parseLua(source) {
 
   function call(name, depth) {
     const descriptor = Object.hasOwn(constructors, name) ? constructors[name] : null;
-    if (!descriptor && name !== 'list') fail(`Unknown value or constructor "${name}"`);
+    const vm = vmConstructors.get(name);
+    if (!descriptor && !vm && name !== 'list') fail(`Unknown value or constructor "${name}"`);
     expect('(');
     const args = [];
-    const limit = descriptor?.fields.length ?? 0;
+    const limit = descriptor?.fields.length ?? vm?.fields.length ?? 0;
     if (!take(')')) {
       do {
         if (args.length === limit) fail(`Too many arguments to "${name}"`);
@@ -140,6 +149,10 @@ function parseLua(source) {
       expect(')');
     }
     if (name === 'list') return [];
+    if (vm) {
+      if (args.length !== vm.fields.length) fail(`Missing arguments to "${name}"`);
+      return {operation: vm.name, operands: Object.fromEntries(vm.fields.map((field, i) => [field.key, args[i]]))};
+    }
     if (args.length < descriptor.required) fail(`Missing arguments to "${name}"`);
     return { ...descriptor.fixed, ...Object.fromEntries(args.map((arg, i) => [descriptor.fields[i], arg])) };
   }
@@ -233,6 +246,12 @@ function formatLua(value, depth = 0) {
     return packed('{', '}', value.map(item => formatLua(item, depth + 1)), depth);
   }
   const keys = Object.keys(value);
+  const vm = vmInstruction(value.operation);
+  if (vm && vm.name !== vm.operation && keys.length === 2 && keys.includes('operands') && value.operands &&
+      !Array.isArray(value.operands) && Object.keys(value.operands).length === vm.fields.length &&
+      vm.fields.every(field => Object.hasOwn(value.operands, field.key))) {
+    return packed(`${vm.name}(`, ')', vm.fields.map(field => formatLua(value.operands[field.key], depth + 1)), depth);
+  }
   for (const [name, { fixed, fields, required }] of Object.entries(constructors)) {
     const prefix = Object.keys(fixed);
     const count = keys.length - prefix.length;

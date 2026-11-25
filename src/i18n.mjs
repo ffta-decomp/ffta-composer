@@ -1,5 +1,10 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
   '剧情片段': 'Story fragment',
+  '补丁选项': 'Patch options',
+  '剧情选择与敌人 HP': 'Story choices and enemy HP',
+  '设置 {0} 的 HP 为 {1}': 'Set {0} HP to {1}',
   '若 {0} 已设定': 'If {0} is set',
   '否则': 'Otherwise',
   '项目': 'Project',

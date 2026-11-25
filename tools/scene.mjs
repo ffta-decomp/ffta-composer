@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { check } from '../src/binary.mjs';

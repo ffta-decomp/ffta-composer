@@ -1,0 +1,133 @@
+{
+  "format": "ffta.scene-project/v1",
+  "profile": "ffta-us-retail",
+  "baseSha256": "43fc8204c6dceee58828aebc7af0c72eb807e99f35ad641c8bb0a4fa8b6edc19",
+  "patches": {
+    "storyChoices": true
+  },
+  "storyEdits": {
+    "herb-ward": {
+      "title": "The Captain's Ward",
+      "trigger": {
+        "scene": 14,
+        "beforeDialogue": 5
+      },
+      "speakers": {
+        "montblanc": {
+          "dialogue": 6
+        }
+      },
+      "enemies": {
+        "captain": {
+          "slot": 0
+        }
+      },
+      "steps": [
+        {
+          "type": "say",
+          "speaker": "montblanc",
+          "text": "See that ward, kupo?\nIt guards their captain."
+        },
+        {
+          "type": "say",
+          "text": "Break it and he weakens.\nLeave it and he fights\nat full strength."
+        },
+        {
+          "type": "choose",
+          "prompt": "What about the ward?",
+          "first": {
+            "label": "Break",
+            "steps": [
+              {
+                "type": "say",
+                "text": "The ward has cracked.\nWe can use the shards."
+              },
+              {
+                "type": "choose",
+                "prompt": "How do we use them?",
+                "first": {
+                  "label": "Scatter",
+                  "steps": [
+                    {
+                      "type": "say",
+                      "speaker": "montblanc",
+                      "text": "His guard is gone.\nOnly 12 HP, kupo!"
+                    },
+                    {
+                      "type": "enemyHp",
+                      "enemy": "captain",
+                      "hp": 12
+                    }
+                  ]
+                },
+                "second": {
+                  "label": "Keep",
+                  "steps": [
+                    {
+                      "type": "say",
+                      "speaker": "montblanc",
+                      "text": "He kept some power.\n28 HP, kupo!"
+                    },
+                    {
+                      "type": "enemyHp",
+                      "enemy": "captain",
+                      "hp": 28
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "second": {
+            "label": "Leave",
+            "steps": [
+              {
+                "type": "say",
+                "text": "Keep the ward intact.\nHow do we approach?"
+              },
+              {
+                "type": "choose",
+                "prompt": "Pick our approach.",
+                "first": {
+                  "label": "Flank",
+                  "steps": [
+                    {
+                      "type": "say",
+                      "speaker": "montblanc",
+                      "text": "His ward slipped.\n52 HP, kupo!"
+                    },
+                    {
+                      "type": "enemyHp",
+                      "enemy": "captain",
+                      "hp": 52
+                    }
+                  ]
+                },
+                "second": {
+                  "label": "Duel",
+                  "steps": [
+                    {
+                      "type": "say",
+                      "speaker": "montblanc",
+                      "text": "His ward holds.\n72 HP, kupo!"
+                    },
+                    {
+                      "type": "enemyHp",
+                      "enemy": "captain",
+                      "hp": 72
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "say",
+          "text": "Watch the captain.\nLet's finish this."
+        }
+      ],
+      "resume": "original"
+    }
+  }
+}

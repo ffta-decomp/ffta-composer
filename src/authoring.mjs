@@ -1,10 +1,16 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check, concat, integer, put16 } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { lineKey, programKey } from './rom.mjs';
+import { READ_MENU_CHOICE, SET_ENCOUNTER_HP } from './story-runtime.mjs';
+import { plainTokens } from './text.mjs';
 
 const SAY = 0x0f;
 const JUMP = 0x19;
 const JUMP_IF_GAME_FLAG = 0x65;
+// The original Herb Picking setup owns the first four enemy records.
+const encounterEnemies = new Map([[14, new Set([0, 1, 2, 3])]]);
 
 function entries(record, label) {
   check(record && typeof record === 'object' && !Array.isArray(record), `Invalid ${label}`);
@@ -26,7 +32,7 @@ function sourceDialogue(commands, selector, occurrence) {
     command.operands.textSelector === selector)[occurrence - 1];
 }
 
-function compileBeats(recipe, addLine, anchor, commands) {
+function compileBeats(recipe, addLine, anchor, commands, profile, enableChoices) {
   const bindings = recipe.flags === undefined ? {} : recipe.flags;
   for (const [name, id] of entries(bindings, 'flag bindings')) {
     symbol(name, 'flag name');
@@ -46,6 +52,35 @@ function compileBeats(recipe, addLine, anchor, commands) {
     speakers.set(name, command.operands);
   }
 
+  const enemies = new Map();
+  for (const [name, binding] of entries(recipe.enemies === undefined ? {} : recipe.enemies, 'enemy bindings')) {
+    symbol(name, 'enemy name');
+    fields(binding, ['slot'], [], 'enemy binding');
+    check(profile === PROFILE.id && encounterEnemies.get(recipe.trigger.scene)?.has(binding.slot),
+      `Enemy slot ${binding.slot} is not verified for this encounter`);
+    enemies.set(name, binding.slot);
+  }
+
+  let usesRuntime = false;
+  function requireRuntime() {
+    check(enableChoices, 'Enable the Story Choices patch to use interactive story instructions');
+    check(profile === PROFILE.id && encounterEnemies.has(recipe.trigger.scene),
+      'Interactive story instructions require a verified retail encounter');
+    usesRuntime = true;
+  }
+
+  function say(text, speaker) {
+    check(typeof text === 'string' && text.trim() && text.length <= 160,
+      'Story dialogue must contain 1–160 characters');
+    return Uint8Array.of(SAY, addLine({ text }), speaker.speakerHandle, speaker.presentationFlags);
+  }
+
+  function jump(distance) {
+    const command = Uint8Array.of(JUMP, 0, 0);
+    put16(command, 1, distance);
+    return command;
+  }
+
   let count = 0;
   function compile(nodes, depth) {
     check(Array.isArray(nodes) && depth <= 8, 'Expected a list of story steps with at most eight nested branches');
@@ -54,11 +89,44 @@ function compileBeats(recipe, addLine, anchor, commands) {
       check(++count <= 128, 'The story fragment exceeds 128 steps');
       if (node?.type === 'say') {
         fields(node, ['type', 'text'], ['speaker'], 'dialogue step');
-        check(typeof node.text === 'string' && node.text.trim() && node.text.length <= 160,
-          'Story dialogue must contain 1–160 characters');
         const speaker = node.speaker === undefined ? anchor : speakers.get(node.speaker);
         check(speaker, `Undeclared story speaker: ${node.speaker}`);
-        parts.push(Uint8Array.of(SAY, addLine(node.text), speaker.speakerHandle, speaker.presentationFlags));
+        parts.push(say(node.text, speaker));
+        continue;
+      }
+      if (node?.type === 'choose') {
+        requireRuntime();
+        fields(node, ['type', 'prompt', 'first', 'second'], [], 'choice step');
+        check(typeof node.prompt === 'string' && node.prompt.trim() && node.prompt.length <= 48 &&
+          node.prompt.split('\n').length <= 2, 'A choice prompt must fit above its options');
+        for (const option of [node.first, node.second]) {
+          fields(option, ['label', 'steps'], [], 'choice option');
+          check(typeof option.label === 'string' && option.label.trim() && option.label.length <= 11 &&
+            !/[\r\n]/.test(option.label), 'A choice label must be one short line');
+        }
+        const glyphs = text => plainTokens(text).slice(0, -2);
+        const tokens = [
+          ...glyphs(node.prompt), { kind: 'control', code: 0x4d, args: [] },
+          { kind: 'control', code: 0x32, args: [0x10] },
+          ...glyphs(node.first.label), { kind: 'separator' },
+          ...glyphs(node.second.label), { kind: 'separator' },
+        ];
+        const prompt = Uint8Array.of(SAY, addLine({ tokens }), anchor.speakerHandle, anchor.presentationFlags);
+        const first = compile(node.first.steps, depth + 1);
+        const second = compile(node.second.steps, depth + 1);
+        check(first.length && second.length, 'Both choice routes need at least one step');
+        const opcode = Uint8Array.of(READ_MENU_CHOICE, 0, 0, 0, 0);
+        put16(opcode, 3, first.length + 3);
+        parts.push(prompt, opcode, first, jump(second.length), second);
+        continue;
+      }
+      if (node?.type === 'enemyHp') {
+        requireRuntime();
+        fields(node, ['type', 'enemy', 'hp'], [], 'encounter HP step');
+        check(enemies.has(node.enemy), `Undeclared story enemy: ${node.enemy}`);
+        const opcode = Uint8Array.of(SET_ENCOUNTER_HP, enemies.get(node.enemy), 0, 0);
+        put16(opcode, 2, integer(node.hp, 1, 999, 'Encounter HP'));
+        parts.push(opcode);
         continue;
       }
       fields(node, ['type', 'flag', 'then'], ['else'], 'conditional step');
@@ -71,15 +139,13 @@ function compileBeats(recipe, addLine, anchor, commands) {
       const branch = Uint8Array.of(JUMP_IF_GAME_FLAG, 0, 0, 0, 0);
       put16(branch, 1, bindings[node.flag]);
       put16(branch, 3, off.length + 3);
-      const skip = Uint8Array.of(JUMP, 0, 0);
-      put16(skip, 1, on.length);
-      parts.push(branch, off, skip, on);
+      parts.push(branch, off, jump(on.length), on);
     }
     return concat(parts);
   }
   const bytes = compile(recipe.steps, 0);
   check(bytes.length, 'A story fragment needs at least one step');
-  return bytes;
+  return { bytes, usesRuntime };
 }
 
 // Bind to a proven native dialogue point and continue it under the same scene context.
@@ -89,11 +155,12 @@ export function lowerStoryEdits(rom, project) {
   const ordered = entries(recipes, 'story edits').sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
   const blocks = new Map();
   const changes = [];
-  if (!ordered.length) return { project, blocks, changes };
+  let usesRuntime = false;
+  if (!ordered.length) return { project, blocks, changes, usesRuntime };
   const effective = structuredClone(project);
   for (const [name, recipe] of ordered) {
     symbol(name, 'story edit');
-    fields(recipe, ['title', 'trigger', 'steps', 'resume'], ['flags', 'speakers'], 'story edit');
+    fields(recipe, ['title', 'trigger', 'steps', 'resume'], ['flags', 'speakers', 'enemies'], 'story edit');
     check(typeof recipe.title === 'string' && recipe.title.trim() && recipe.title.length <= 80, 'Invalid story title');
     check(recipe.resume === 'original', 'A story fragment must resume the native scene');
     fields(recipe.trigger, ['scene', 'beforeDialogue'], ['occurrence'], 'story trigger');
@@ -126,13 +193,14 @@ export function lowerStoryEdits(rom, project) {
     effective.programs[key] = { cloneFrom: source };
     effective.scenes[id] = { script: { group, program }, dialoguePage: page };
     let line = records.length;
-    const bytes = compileBeats(recipe, text => {
+    const compiled = compileBeats(recipe, lineData => {
       const newLine = integer(line++, 0, 239, 'New story dialogue selector');
-      effective.dialogue[lineKey(page, newLine)] = { text, flags: records[selector].flags };
+      effective.dialogue[lineKey(page, newLine)] = { ...lineData, flags: records[selector].flags };
       return newLine;
-    }, anchor.operands, original.commands);
-    blocks.set(key, new Map([[anchor.offset, bytes]]));
+    }, anchor.operands, original.commands, rom.profile, project.patches?.storyChoices === true);
+    usesRuntime ||= compiled.usesRuntime;
+    blocks.set(key, new Map([[anchor.offset, compiled.bytes]]));
     changes.push({ kind: 'story', target: name, action: 'add', before: null, after: recipe });
   }
-  return { project: effective, blocks, changes };
+  return { project: effective, blocks, changes, usesRuntime };
 }

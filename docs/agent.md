@@ -1,5 +1,18 @@
 # Agent integration and native resource format
 
+See the [complete instruction reference](instructions.md) for parameter ranges, all
+31 named native operations, text controls, patch gating and validation limits.
+
+The [complete native VM analysis](scene-vm.md) covers all 114 descriptors,
+including native menu branching (0x71), waits and parallel child scripts.
+
+All 114 instructions have [typed JSON descriptions](scene-vm-instructions.json),
+a [strict schema](../schemas/scene-vm.schema.json), and [Lua expressions](scene-vm-examples.lua).
+For example `waitFrames8(30)` and `showDialogue(5, 15, 128)` create low-level
+instruction objects. `getCatalog()` also returns all 114 typed descriptions in
+`vmInstructions`. These differ from high-level story `say(text)`. The 83
+previously opaque operations retain their native source/layout/byte protections.
+
 ## Workflow
 
 1. Load a supported ROM and request its catalog. IDs are numeric, stable
@@ -41,6 +54,8 @@ this authoring language.
 | --- | --- |
 | `say(text)`, `sayAs(actor, text)` or `say(text, actor)` | Dialogue step with an optional native speaker binding |
 | `when(flag, yes, no)` | Native flag branch. The last argument is optional. |
+| `choose(prompt, first, second)`, `option(label, steps)` | Native two-option dialogue with patch-gated branching |
+| `enemyHp(enemy, hp)` | Patch-gated encounter HP (verified retail scene 14, slots 0–3) |
 | `op(name, operands)` | Named native instruction |
 | `native(opcode, bytes)` | Preserved instruction and its opaque bytes |
 | `glyph(code, width)`, `control(code, args, side)`, `separator()` | Dialogue tokens. The side is optional. |

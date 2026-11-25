@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 /** Built-in tools register independently of the shell and share its project session. */
 export function createPanelRegistry(definitions) {
   const indexed = new Map();
