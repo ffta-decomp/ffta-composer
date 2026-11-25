@@ -1,0 +1,6030 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ffta:scene-vm-instruction:v1",
+  "title": "FFTA US native scene instruction",
+  "description": "Encoding validation only. Unmodeled native instructions still require an unchanged source layout and bytes.",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "startSceneScript"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "delta"
+          ],
+          "properties": {
+            "kind": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "startAnonymousSceneScript"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "finishSceneTask"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "waitForSceneScript"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "handle"
+          ],
+          "properties": {
+            "handle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "waitForAllSceneScripts"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "cancelSceneScripts"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "fadeSceneBrightness"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "frames",
+            "level"
+          ],
+          "properties": {
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "frames": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "level": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "restoreSceneBrightness"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "initializeSceneBlend"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "clearSceneBlend"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp0A"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "value"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "fadeSceneAlpha"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "first",
+            "second",
+            "duration"
+          ],
+          "properties": {
+            "first": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "second": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "duration": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "loadSceneMap"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "map"
+          ],
+          "properties": {
+            "map": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setSceneRuntimeState12"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setBackgroundLayers"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "showDialogue"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "textSelector",
+            "speakerHandle",
+            "presentationFlags"
+          ],
+          "properties": {
+            "textSelector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "speakerHandle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "presentationFlags": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setSceneContentWord"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "showSceneMessage"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "showScenePrompt"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "startSceneContextEvent"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "waitForSceneCompletion"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "b1"
+          ],
+          "properties": {
+            "b1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "waitFrames8"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "frames"
+          ],
+          "properties": {
+            "frames": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "waitFrames16"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "frames"
+          ],
+          "properties": {
+            "frames": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setSceneRuntimeMode"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "transitionSceneState"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "transition"
+          ],
+          "properties": {
+            "transition": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "adjustScriptOffset"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setStoryFlag"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "flag",
+            "value"
+          ],
+          "properties": {
+            "flag": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "writeNativeSaveByte"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "index",
+            "value"
+          ],
+          "properties": {
+            "index": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "queueScene"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scene"
+          ],
+          "properties": {
+            "scene": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setSceneStatePair"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "applySceneSelector"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "placeScenePackedActor"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "packedXY",
+            "arg",
+            "packedXY2",
+            "arg2"
+          ],
+          "properties": {
+            "type": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "packedXY": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "arg": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "packedXY2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "arg2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "placeSceneActor"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "tile",
+            "facing",
+            "visibility"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "tile": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "facing": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "visibility": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp21"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector",
+            "value"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "selectSceneTarget"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "clearActorFlag0"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setActorFlag0"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "turnActorAction"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "direction",
+            "mode"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "direction": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "createActionFromHandles"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "firstHandle",
+            "secondHandle"
+          ],
+          "properties": {
+            "firstHandle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "secondHandle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "playActorAction"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "action",
+            "mode"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "action": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "refreshActorFacing"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setActorFacing"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "facing"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "facing": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "restoreSceneUnit"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "actorPaletteOverride"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "first",
+            "condition",
+            "delay"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "first": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "condition": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delay": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp2C"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector",
+            "operand",
+            "value"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "operand": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setSceneUnitState"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "stateIndex",
+            "value"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "stateIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "addActorPosition"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "dx",
+            "dy",
+            "dz"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "dx": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "dy": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "dz": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setActorTile"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "x",
+            "y"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setActorStateMasks"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "mode",
+            "value"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "replaceActorAction"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "argument",
+            "presentation"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "argument": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "presentation": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "refreshActorPaletteSlot"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "spawnSceneActor"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "reference",
+            "x1",
+            "y1",
+            "x2",
+            "y2",
+            "x3",
+            "y3"
+          ],
+          "properties": {
+            "type": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "reference": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "y1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "y2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "y3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "selectSceneUnit"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "unit",
+            "selection"
+          ],
+          "properties": {
+            "unit": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "selection": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "bindSavedSceneUnit"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "savedSelection",
+            "binding"
+          ],
+          "properties": {
+            "savedSelection": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "binding": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "beginSceneReward"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setSceneUnitFlag100"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "unit"
+          ],
+          "properties": {
+            "unit": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp38"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector",
+            "value",
+            "mode",
+            "amount"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "amount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "moveActorByDelta"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "dx",
+            "dy",
+            "mode",
+            "argument"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "dx": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "dy": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "argument": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "moveActorToTile"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "x",
+            "y",
+            "mode",
+            "argument"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "type": "integer",
+              "minimum": -128,
+              "maximum": 127
+            },
+            "y": {
+              "type": "integer",
+              "minimum": -128,
+              "maximum": 127
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "argument": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneNoop3B"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "b1",
+            "b2",
+            "b3",
+            "b4",
+            "b5",
+            "b6",
+            "b7"
+          ],
+          "properties": {
+            "b1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b4": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b5": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b6": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b7": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneNoop3C"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "b1",
+            "b2",
+            "b3",
+            "b4",
+            "b5"
+          ],
+          "properties": {
+            "b1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b4": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b5": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "moveActorByDeltaMode"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "dx",
+            "dy",
+            "mode",
+            "dispatch",
+            "argument"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "dx": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "dy": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "dispatch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "argument": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "moveActorOnGrid"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "x",
+            "y",
+            "facing",
+            "mode",
+            "speed"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "facing": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "speed": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "applySceneLine"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "packedStart",
+            "packedEnd",
+            "value"
+          ],
+          "properties": {
+            "packedStart": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "packedEnd": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "applyActorSceneLine"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "packedEnd",
+            "value"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "packedEnd": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "runActorPath"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "packedPath",
+            "delay"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "packedPath": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delay": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "runActorPathRange"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "packedRange",
+            "delay"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "packedRange": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delay": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "mergeScenePaths"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "packedSources",
+            "destination"
+          ],
+          "properties": {
+            "packedSources": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "destination": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "runActorCoordinatePath"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "path",
+            "b3",
+            "packed"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "path": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "packed": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "loadScenePath"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pathId",
+            "slot"
+          ],
+          "properties": {
+            "pathId": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "slot": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "moveCameraToActor"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "actor",
+            "mode",
+            "amount"
+          ],
+          "properties": {
+            "actor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "amount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "moveSceneCamera"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y",
+            "mode",
+            "duration"
+          ],
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "duration": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "prepareMapView"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "restoreSceneContext"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "restore"
+          ],
+          "properties": {
+            "restore": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "applyCurrentSceneSelection"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "selectScenePresentation"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "preset"
+          ],
+          "properties": {
+            "preset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "playSceneAudioDefinition"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "definition",
+            "mode"
+          ],
+          "properties": {
+            "definition": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "fadeSceneAudio"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level",
+            "frames",
+            "channels"
+          ],
+          "properties": {
+            "level": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "frames": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "channels": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "loadEncounterUnits"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "updateSceneActorTransition"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector",
+            "update"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "update": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp50"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "resetSceneActionContext"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "clearSceneStoryUnits"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "selectSceneEncounter"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "encounter"
+          ],
+          "properties": {
+            "encounter": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "applySceneSystemValue"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp55"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "b1",
+            "b2",
+            "b3",
+            "b4"
+          ],
+          "properties": {
+            "b1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b4": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp56"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "initializeSceneTaskContext"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "clearSceneTaskContext"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "selectCurrentSceneEntity"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "handle"
+          ],
+          "properties": {
+            "handle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "selectSceneTaskIndex"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "oneBasedIndex"
+          ],
+          "properties": {
+            "oneBasedIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "waitForSceneTask"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp5C"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setSceneContentBytes"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "first",
+            "second"
+          ],
+          "properties": {
+            "first": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "second": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp5E"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp5F"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp60"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "consumeSceneSaveFlag"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneOp62"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "payload",
+            "b2",
+            "b3",
+            "b4",
+            "b5",
+            "b6",
+            "b7",
+            "wait"
+          ],
+          "properties": {
+            "payload": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b4": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b5": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b6": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "b7": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "wait": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "resetSceneView"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfUnitUsable"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "unit",
+            "delta"
+          ],
+          "properties": {
+            "unit": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfStoryFlag"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "flag",
+            "delta"
+          ],
+          "properties": {
+            "flag": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "addOffsetWhenTargetFlagSet"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "handle",
+            "bit",
+            "delta"
+          ],
+          "properties": {
+            "handle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "bit": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfSceneCounterAbove"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "threshold",
+            "delta"
+          ],
+          "properties": {
+            "threshold": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfSceneSelector"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selector",
+            "delta"
+          ],
+          "properties": {
+            "selector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfDefinitionFlag1"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfDefinitionFlag2Clear"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "sceneNoop6B"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfUnitAvailable"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "unit",
+            "delta"
+          ],
+          "properties": {
+            "unit": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfContentByteClear"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfNativeSaveFlag"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfHpAbove"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "unit",
+            "threshold",
+            "delta"
+          ],
+          "properties": {
+            "unit": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "threshold": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchIfNoEligibleUnit"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "branchOnFirstChoice"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "delta"
+          ],
+          "properties": {
+            "delta": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "selectSceneHandle"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "handle"
+          ],
+          "properties": {
+            "handle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "waitForActors"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "say"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "textSelector",
+            "speakerHandle",
+            "presentationFlags"
+          ],
+          "properties": {
+            "textSelector": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "speakerHandle": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "presentationFlags": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "applySceneMode"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "setContextValue"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 0
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 1
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 5
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 7
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 8
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 9
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 10
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 11
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 14
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 16
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 17
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 19
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 20
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 22
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 24
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 27
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 29
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 30
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 31
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 33
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 34
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 35
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 36
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 37
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 42
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 43
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 44
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 45
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 46
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 48
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 49
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 50
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 51
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 52
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 53
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 54
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 55
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 56
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 57
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 58
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 59
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 60
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 61
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 63
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 64
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 65
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 66
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 67
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 68
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 69
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 70
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 73
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 74
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 76
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 79
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 80
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 81
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 82
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 84
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 85
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 86
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 90
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 92
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 93
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 94
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 95
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 96
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 97
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 98
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 99
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 100
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 101
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 103
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 104
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 105
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 106
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 107
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 0,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 108
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 109
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 110
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 111
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 112
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "opcode",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "native"
+        },
+        "opcode": {
+          "const": 113
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    }
+  ]
+}

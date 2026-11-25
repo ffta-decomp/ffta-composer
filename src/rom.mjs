@@ -1,4 +1,7 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { PROFILE, OPERATIONS, US_LAYOUT_SIGNATURES } from './profile.mjs';
+import { VM_INSTRUCTIONS } from './vm-instructions.mjs';
 import { check, digest, hex, u16, u32 } from './binary.mjs';
 import { readLine } from './text.mjs';
 
@@ -167,6 +170,7 @@ export function catalog(rom, { includePrograms = false, includeDialogue = false 
   return {
     format: 'ffta.scene-catalog/v1', profile: rom.profile, baseSha256: rom.sha256, scenes,
     opcodes: [...rom.specs.values()],
+    vmInstructions: VM_INSTRUCTIONS,
     pages: [...rom.pages.values()].map(({ key, page, variant, records }) => ({
       key, page, variant, lineCount: records.length,
       ...(includeDialogue ? { lines: records.map(({ index, flags, encoding, tokens, preview }) => ({ index, flags, encoding, tokens, preview })) } : {}),

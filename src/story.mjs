@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { pageKey, programKey } from './rom.mjs';
@@ -52,10 +54,16 @@ export function describeStory(rom, change, id, variant = 0) {
     const [target, line] = edit.target.split(':');
     if (edit.kind === 'dialogue' && target === page) lines.set(Number(line), edit.after.text);
   }
+  const story = change.storyEdits?.find(edit => edit.after.trigger.scene === id);
+  let occurrence = 0;
   const linear = storySteps(commands).flatMap(step => {
     const inserted = (changed?.insertions ?? []).flatMap((event, i) => event.anchorOffset === step.offset
       ? [{ ...event, kind: 'dialogue', index: step.index, offset: step.offset, insertionIndex: i, pageScope: 'scene' }]
       : []);
+    if (story && step.kind === 'dialogue' && step.textSelector === story.after.trigger.beforeDialogue &&
+      ++occurrence === (story.after.trigger.occurrence ?? 1)) {
+      return [{ kind: 'authored', index: step.index, offset: step.offset, id: story.target, recipe: story.after }, ...inserted, step];
+    }
     return [...inserted, step];
   });
   const steps = linear.map(step => step.kind === 'dialogue' && step.pageScope === 'scene'

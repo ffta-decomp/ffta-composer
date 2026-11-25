@@ -1,0 +1,23 @@
+{
+  "format": "ffta.scene-project/v1",
+  "profile": "ffta-us-retail",
+  "baseSha256": "43fc8204c6dceee58828aebc7af0c72eb807e99f35ad641c8bb0a4fa8b6edc19",
+  "storyEdits": {
+    "herb-field-report": {
+      "title": "Herb Picking Field Report",
+      "trigger": { "scene": 15, "beforeDialogue": 7 },
+      "flags": { "route-marker": 589 },
+      "steps": [
+        { "type": "say", "text": "Take a look over here." },
+        {
+          "type": "if",
+          "flag": "route-marker",
+          "then": [{ "type": "say", "text": "The upper trail is clear." }],
+          "else": [{ "type": "say", "text": "The lower trail is clear." }]
+        },
+        { "type": "say", "text": "Let's gather the herbs." }
+      ],
+      "resume": "original"
+    }
+  }
+}

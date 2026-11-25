@@ -1,10 +1,13 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { check } from '../src/binary.mjs';
 import { catalog } from '../src/rom.mjs';
 import { describeStory } from '../src/story.mjs';
 import { buildBattleListenerProbe, buildBattleVictoryProbe } from '../src/battle-probes.mjs';
-import { build, importProject, inspectRom, openRom, plan, previewBuild } from '../src/project.mjs';
+import { formatProjectText, parseProjectText } from '../src/project-text.mjs';
+import { FORMAT, build, importProject, inspectRom, openRom, plan, previewBuild } from '../src/project.mjs';
 
 process.stdout.on('error', error => {
   if (error.code === 'EPIPE') process.exit(0);
@@ -13,11 +16,18 @@ process.stdout.on('error', error => {
 
 const [, , command, input, ...args] = process.argv;
 const json = document => JSON.stringify(document, null, 2) + '\n';
-const readJson = async path => JSON.parse(await readFile(path, 'utf8'));
+const readProject = async path => parseProjectText(await readFile(path, 'utf8'));
 
 async function main() {
-  check(input && ['inspect', 'catalog', 'story', 'project', 'diff', 'build', 'battle-probe'].includes(command),
-    'Usage: scene inspect ROM | catalog ROM [--programs] [--dialogue] | story ROM SCENE [PROJECT] [VARIANT] | project ROM | diff ROM PROJECT | build ROM PROJECT OUTPUT | battle-probe ROM OUTPUT [--victory]');
+  check(input && ['inspect', 'catalog', 'story', 'project', 'diff', 'build', 'battle-probe', 'convert'].includes(command),
+    'Usage: scene inspect ROM | catalog ROM [--programs] [--dialogue] | story ROM SCENE [PROJECT] [VARIANT] | project ROM [--lua] | diff ROM PROJECT | build ROM PROJECT OUTPUT | battle-probe ROM OUTPUT [--victory] | convert PROJECT json|lua');
+  if (command === 'convert') {
+    check(args.length === 1, 'Expected json or lua as the output format');
+    const document = await readProject(input);
+    check(document?.format === FORMAT, 'Expected an FFTA Composer project');
+    process.stdout.write(formatProjectText(document, args[0]));
+    return;
+  }
   const romInput = new Uint8Array(await readFile(input));
   if (command === 'inspect') {
     check(!args.length, 'Expected only a ROM path');
@@ -40,17 +50,17 @@ async function main() {
   }
   if (command === 'story') {
     check(args.length >= 1 && args.length <= 3, 'Expected scene ID, optional project and variant');
-    const candidate = args[1] ? importProject(rom, project, await readJson(args[1])) : project;
+    const candidate = args[1] ? importProject(rom, project, await readProject(args[1])) : project;
     process.stdout.write(json(describeStory(rom, plan(rom, candidate), Number(args[0]), args[2] === undefined ? 0 : Number(args[2]))));
     return;
   }
   if (command === 'project') {
-    check(!args.length, 'Expected only a ROM path');
-    process.stdout.write(json(project));
+    check(!args.length || (args.length === 1 && args[0] === '--lua'), 'Expected optional --lua');
+    process.stdout.write(formatProjectText(project, args.length ? 'lua' : 'json'));
     return;
   }
   check(args.length === (command === 'build' ? 2 : 1), 'Expected project and output paths');
-  const candidate = importProject(rom, project, await readJson(args[0]));
+  const candidate = importProject(rom, project, await readProject(args[0]));
   const report = command === 'build' ? build(rom, candidate) : previewBuild(rom, candidate);
   const { bytes, ...details } = report;
   if (command === 'build') {

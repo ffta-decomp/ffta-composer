@@ -1,4 +1,12 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '剧情片段': 'Story fragment',
+  '补丁选项': 'Patch options',
+  '剧情选择与敌人 HP': 'Story choices and enemy HP',
+  '设置 {0} 的 HP 为 {1}': 'Set {0} HP to {1}',
+  '若 {0} 已设定': 'If {0} is set',
+  '否则': 'Otherwise',
   '项目': 'Project',
   '场景': 'Scenes',
   '第一幕': 'Opening scene',
@@ -66,7 +74,8 @@ const english = {
   '未载入 ROM': 'No ROM open',
   '打开 ROM': 'Open ROM',
   '导入项目': 'Import project',
-  '保存项目': 'Save project',
+  '保存项目 JSON': 'Save project as JSON',
+  '保存项目 Lua': 'Save project as Lua',
   '导出 ROM': 'Export ROM',
   '打开美版 ROM': 'Open a US ROM',
   '浏览剧情、台词和场景指令。在导出前查看每项改动。': 'Browse scenes, dialogue, and instructions. Review your changes before exporting.',
@@ -188,7 +197,7 @@ const english = {
   '目标': 'Target',
   '确认合并': 'Merge project',
   '导入新 ROM 会丢弃当前未保存的编辑。继续吗？': 'Opening another ROM discards unsaved changes. Continue?',
-  '已生成项目 JSON': 'Project JSON generated',
+  '已保存项目 · {0}': 'Project saved · {0}',
   'ROM 已导出 · {0} 项改动': 'ROM exported · {0} changes',
   'Agent 数据交换': 'Agent data exchange',
   '场景目录供检索和定位。项目 JSON 记录改动，差异报告包含 ROM 写入范围。': 'Use the catalog to find resources, the project to describe changes, and the diff to inspect ROM writes.',

@@ -1,9 +1,12 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check, hex } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { catalog, lineKey, pageKey, programKey } from './rom.mjs';
 import { BATTLE_SCENE } from './battle.mjs';
 import { buildBattleListenerProbe } from './battle-probes.mjs';
 import { build, importProject, inspectRom, openRom, plan, previewBuild } from './project.mjs';
+import { formatProjectText, parseProjectText } from './project-text.mjs';
 import { localizeShell, t, tr } from './i18n.mjs';
 import { describeStory } from './story.mjs';
 import { $, button, dialog, download, downloadJson, el, field, handle, notice, number, section,
@@ -162,7 +165,9 @@ function render() {
   $('#rom-name').hidden = !ready;
   $('#workspace').hidden = !ready;
   $('#export-rom').hidden = !ready;
-  document.querySelectorAll('.menu-items [data-needs-rom]').forEach(node => { node.hidden = !ready; });
+  document.querySelectorAll('.menu-items [data-needs-rom]').forEach(node => {
+    node.hidden = !ready || (node.hasAttribute('data-retail-only') && state.rom.profile !== PROFILE.id);
+  });
   if (!ready) return;
   $('#rom-name').textContent = state.name;
   renderList();
@@ -194,9 +199,29 @@ function readableDialogue(text) {
   return text?.replace(/〈0x[0-9a-f]+:\d+〉/gi, '〈…〉').replace(/⟨0x[0-9a-f]+⟩/gi, '□');
 }
 
+function renderAuthoredSteps(steps) {
+  const list = el('ol', undefined, 'diff-timeline');
+  for (const step of steps) {
+    const item = el('li');
+    if (step.type === 'say') item.textContent = step.speaker ? `${step.speaker} · ${step.text}` : step.text;
+    else if (step.type === 'enemyHp') item.textContent = tr`设置 ${step.enemy} 的 HP 为 ${step.hp}`;
+    else if (step.type === 'choose') {
+      const prompt = el('p', step.prompt, 'dialogue-preview');
+      item.append(prompt, el('strong', step.first.label), renderAuthoredSteps(step.first.steps),
+        el('strong', step.second.label), renderAuthoredSteps(step.second.steps));
+    } else {
+      item.append(el('strong', tr`若 ${step.flag} 已设定`), renderAuthoredSteps(step.then));
+      if (step.else?.length) item.append(el('strong', t('否则')), renderAuthoredSteps(step.else));
+    }
+    list.append(item);
+  }
+  return list;
+}
+
 function renderStory(body, scene) {
   const selectedVariant = state.page?.startsWith(`${PROFILE.dialogue.nested}/`) ? Number(state.page.split('/')[1]) : 0;
   const story = describeStory(state.rom, state.plan, scene.id, selectedVariant);
+  const hasAuthoredFragment = story.steps.some(step => step.kind === 'authored');
   const program = programFor(scene);
   const records = pageRecords(story.page);
   if (scene.id === 1 && state.rom.profile === PROFILE.id) {
@@ -231,6 +256,13 @@ function renderStory(body, scene) {
   let interlude;
   let lineNumber = 0;
   for (const step of story.steps) {
+    if (step.kind === 'authored') {
+      const recipe = el('li', undefined, 'step authored');
+      recipe.append(el('strong', step.recipe.title), renderAuthoredSteps(step.recipe.steps));
+      flow.append(recipe);
+      interlude = null;
+      continue;
+    }
     const item = el('li', undefined, `step ${step.kind}`);
     item.id = step.insertionIndex === undefined ? `step-${step.offset}` : `insertion-${step.insertionIndex}`;
     const heading = el('div', undefined, 'step-head');
@@ -248,7 +280,7 @@ function renderStory(body, scene) {
           variants.push(button(t('在前面插入对白'), () => writeStoryLine(story, program.commands, step, 'insert')),
             button(t('改用新对白'), () => writeStoryLine(story, program.commands, step, 'replace')));
         }
-        if (step.textSelector <= records.length) {
+        if (!hasAuthoredFragment && step.textSelector <= records.length) {
           const edit = button(text, () => editDialogue(story.page, step.textSelector, variants), 'dialogue-preview line-edit');
           edit.setAttribute('aria-label', `${t('编辑对白')} · ${text}`);
           item.append(edit);
@@ -435,7 +467,8 @@ function appendChangePreview(pane, kind, value) {
   }
   const details = el('details');
   details.append(el('summary', t('结构化数据')), el('pre', serialize(value)));
-  if (kind === 'dialogue') pane.append(el('p', readableDialogue(value.text) || t('（空对白）'), 'dialogue-preview'));
+  if (kind === 'story') pane.append(el('p', value.title), renderAuthoredSteps(value.steps));
+  else if (kind === 'dialogue') pane.append(el('p', readableDialogue(value.text) || t('（空对白）'), 'dialogue-preview'));
   else if (kind === 'opening') {
     const timeline = el('ol', undefined, 'diff-timeline');
     for (const step of value.steps) {
@@ -462,7 +495,7 @@ function renderDiff(body) {
     body.append(el('p', t('当前项目没有实际改动。'), 'note'));
     return;
   }
-  const kinds = { opening: '过场编排', battle: '战斗事件', scene: '索引', program: '脚本', page: '对白页', dialogue: '对白' };
+  const kinds = { story: '剧情片段', opening: '过场编排', battle: '战斗事件', scene: '索引', program: '脚本', page: '对白页', dialogue: '对白' };
   for (const change of state.plan.diffs) {
     const item = el('details', undefined, 'change');
     item.append(el('summary', `${t(change.action === 'add' ? '新增' : '修改')} · ${t(kinds[change.kind])} ${change.target}`));
@@ -705,18 +738,21 @@ $('#rom-file').onchange = handle(async event => {
 $('#project-file').onchange = handle(async event => {
   const file = event.target.files[0];
   event.target.value = '';
-  if (file) importDialog(JSON.parse(await file.text()));
+  if (file) importDialog(parseProjectText(await file.text()));
 });
 $('#search').oninput = event => { state.query = event.target.value; renderList(); };
 $('#filter').onchange = event => { state.filter = event.target.value; renderList(); };
 $('#new-scene').onclick = () => createScene();
 $('#close-dialog').onclick = $('#cancel-dialog').onclick = () => $('#editor').close();
-$('#save-project').onclick = () => {
-  downloadJson('ffta.scene.project.json', state.project);
+function saveProject(format) {
+  const mime = format === 'lua' ? 'text/x-lua' : 'application/json';
+  download(`ffta.scene.project.${format}`, formatProjectText(state.project, format), mime);
   state.saved = serialize(state.project);
   render();
-  notice(t('已生成项目 JSON'));
-};
+  notice(tr`已保存项目 · ${format === 'lua' ? 'Lua' : 'JSON'}`);
+}
+$('#save-project').onclick = handle(() => saveProject('json'));
+$('#save-project-lua').onclick = handle(() => saveProject('lua'));
 $('#export-rom').onclick = handle(() => {
   check(!state.plan.battles.size, t('战斗事件还需运行时接入，完整 ROM 暂不可导出。'));
   const { bytes, changes } = build(state.rom, state.project);
@@ -763,6 +799,14 @@ const tabs = panels.list.map(panel => {
   $(panel.secondary ? '#extra-tabs' : '#workspace-tabs').append(element);
   return { panel, element };
 });
+$('#patch-options').onclick = () => {
+  const choice = el('input');
+  choice.type = 'checkbox';
+  choice.checked = state.project.patches?.storyChoices === true;
+  dialog(t('补丁选项'), [field(t('剧情选择与敌人 HP'), choice)], () => {
+    commit({ ...state.project, patches: { ...state.project.patches, storyChoices: choice.checked } });
+  });
+};
 $('#agent').onclick = () => dialog(t('Agent 数据交换'), [
   el('p', t('场景目录供检索和定位。项目 JSON 记录改动，差异报告包含 ROM 写入范围。'), 'note'),
   button(t('导出场景目录'), () => downloadJson('ffta.scene.catalog.json', catalog(state.rom))),
@@ -797,14 +841,20 @@ window.fftaSceneEditor = Object.freeze({
     return structuredClone(describeStory(state.rom, state.plan, id, variant));
   },
   getProject() { check(state.rom, 'Open a ROM first'); return structuredClone(state.project); },
+  exportProject(format = 'json') {
+    check(state.rom, 'Open a ROM first');
+    return formatProjectText(state.project, format);
+  },
   preview(incoming, mode = 'merge') {
     check(state.rom, 'Open a ROM first');
-    const candidate = importProject(state.rom, state.project, incoming, mode);
+    const input = typeof incoming === 'string' ? parseProjectText(incoming) : incoming;
+    const candidate = importProject(state.rom, state.project, input, mode);
     return previewBuild(state.rom, candidate);
   },
   apply(incoming, mode = 'merge') {
     check(state.rom, 'Open a ROM first');
-    commit(importProject(state.rom, state.project, incoming, mode));
+    const input = typeof incoming === 'string' ? parseProjectText(incoming) : incoming;
+    commit(importProject(state.rom, state.project, input, mode));
   },
   exportRom() { check(state.rom, 'Open a ROM first'); return build(state.rom, state.project).bytes; },
   exportBattleListenerProbe() {

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { battleEventStep, BATTLE_SCENE, DEMO_ID, snowballDemo } from '../battle.mjs';
 import { buildBattleListenerProbe } from '../battle-probes.mjs';
 import { t, tr } from '../i18n.mjs';

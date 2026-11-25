@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check, eq, put32, u32 } from './binary.mjs';
 import { BATTLE_SCENE, DEMO_ID } from './battle.mjs';
 import { PROFILE } from './profile.mjs';

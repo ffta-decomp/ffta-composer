@@ -1,5 +1,18 @@
 # Agent integration and native resource format
 
+See the [complete instruction reference](instructions.md) for parameter ranges, all
+31 named native operations, text controls, patch gating and validation limits.
+
+The [complete native VM analysis](scene-vm.md) covers all 114 descriptors,
+including native menu branching (0x71), waits and parallel child scripts.
+
+All 114 instructions have [typed JSON descriptions](scene-vm-instructions.json),
+a [strict schema](../schemas/scene-vm.schema.json), and [Lua expressions](scene-vm-examples.lua).
+For example `waitFrames8(30)` and `showDialogue(5, 15, 128)` create low-level
+instruction objects. `getCatalog()` also returns all 114 typed descriptions in
+`vmInstructions`. These differ from high-level story `say(text)`. The 83
+previously opaque operations retain their native source/layout/byte protections.
+
 ## Workflow
 
 1. Load a supported ROM and request its catalog. IDs are numeric, stable
@@ -18,14 +31,54 @@ The browser bridge on the editor's own page exposes:
 - `await open(bytes, fileName)`
 - `getCatalog({ includePrograms, includeDialogue })`
 - `getStory(sceneId, variantIndex = 0)` → ordered story steps, resolved dialogue, and known branch offsets
-- `getProject()`
-- `preview(project, 'merge' | 'replace')`
-- `apply(project, 'merge' | 'replace')`
+- `getProject()` → project object
+- `exportProject('json' | 'lua')` → complete project text
+- `preview(projectOrText, 'merge' | 'replace')`
+- `apply(projectOrText, 'merge' | 'replace')`
 - `exportRom()` → `Uint8Array`
 
 Merge replaces entries by resource key. Replace uses the supplied project
 as the complete edit set. Both validate the result before changing editor
 state. The editor never evaluates code from a project document.
+
+## Project source formats
+
+A project can be saved and loaded as JSON or Lua. Both forms reach the same
+ROM-profile and project validation before compilation. The Lua importer reads
+one returned data table using a static parser. The parser accepts named tables,
+ordered arrays, strings, numbers, booleans, comments and the constructors
+below. Arbitrary function calls, assignments, loops and file access are outside
+this authoring language.
+
+| Lua expression | Project data |
+| --- | --- |
+| `say(text)`, `sayAs(actor, text)` or `say(text, actor)` | Dialogue step with an optional native speaker binding |
+| `when(flag, yes, no)` | Native flag branch. The last argument is optional. |
+| `choose(prompt, first, second)`, `option(label, steps)` | Native two-option dialogue with patch-gated branching |
+| `enemyHp(enemy, hp)` | Patch-gated encounter HP (verified retail scene 14, slots 0–3) |
+| `op(name, operands)` | Named native instruction |
+| `native(opcode, bytes)` | Preserved instruction and its opaque bytes |
+| `glyph(code, width)`, `control(code, args, side)`, `separator()` | Dialogue tokens. The side is optional. |
+| `list()`, `{}`, `null` | Empty array, empty object, and JSON null |
+
+Use list-style tables for nonempty arrays and keyed tables for maps. Keys such
+as `["63:2"]` retain the original resource references. Short quoted strings
+support escapes such as `\n`, `\t` and `\u{e9}`. Lua long strings and long
+comments can span multiple lines. Every constructor has a table form, so
+documents can represent every field and value of the project schema.
+
+The [JSON sample](../examples/herb-arrival.json) and
+[Lua sample](../examples/herb-arrival.lua) compile to the same ROM bytes.
+
+```sh
+node tools/scene.mjs convert examples/herb-arrival.json lua
+node tools/scene.mjs diff /path/to/retail.gba examples/herb-arrival.lua
+node tools/scene.mjs build /path/to/retail.gba examples/herb-arrival.lua /path/to/story.gba
+```
+
+`convert` changes the source representation. `diff` and `build` validate the
+project against the supplied ROM. The GBA executes the emitted native
+instructions.
 
 ## Project example
 
@@ -110,3 +163,30 @@ Battle event drafts are available under `battleEvents["snowball.goblin"]`.
 Call `preview` to inspect the typed rule and `buildable` status. Use
 `exportBattleListenerProbe()` when testing the standalone damage hook.
 See [Battle event trial](battle-events.md).
+
+## Declarative story fragments
+
+Import [Herb Picking Arrival](../examples/herb-arrival.json) as a project.
+Its `storyEdits` entry attaches to an existing dialogue in the mission's
+entry scene. The editor renders both alternatives at the anchor.
+`getStory(14)` returns the fragment as a structured `authored` step.
+
+A `say` step inherits the anchor's speaker and presentation. Use a named
+speaker binding to borrow another native line's actor and presentation.
+That actor must already be available in the scene when the fragment runs.
+An `if` step reads a named game flag. Its two paths rejoin and the fragment
+resumes the original dialogue. The example uses native flag 589 as a branch
+input and does not assign it a mission-completion meaning.
+
+The compiler clones the host program and dialogue page into expanded space.
+Only the selected scene uses the clones. The JSON has no jump offsets or
+executable source. The current trigger must be an existing nonvariant
+dialogue site. New quest registration, persistent custom state, new actors
+and battle-time listeners require their own native bindings.
+
+The arrival fixture was replayed in mGBA from a loaded save with each branch
+input set while the first dialogue box was open. Both routes displayed the
+correct alternative, passed the next line to Montblanc and returned to the
+original mission dialogue. The [post-battle example](../examples/herb-field-report.json)
+has build and bytecode coverage. A full victory-to-settlement replay of that
+fixture remains pending.

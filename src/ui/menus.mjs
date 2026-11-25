@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 export function bindMenus() {
   const menus = [...document.querySelectorAll('.menu')];
 

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check } from '../binary.mjs';
 import { t } from '../i18n.mjs';
 import { blankOpening, DIRECTIONS, OPENING_CAST, OPENING_ID, openingExample } from '../opening.mjs';

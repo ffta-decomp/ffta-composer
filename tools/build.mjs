@@ -1,3 +1,5 @@
+// Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+// FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +28,7 @@ async function include(url) {
 
 const entry = await include(new URL('app.mjs', sourceRoot));
 const html = (await read(new URL('index.html', root)))
+  .replace('<!-- COMPOSER_LICENSE -->', `<!--\n${await read(new URL('NOTICE', root))}\n${await read(new URL('LICENSE', root))}\n-->`)
   .replace('<link rel="stylesheet" href="./style.css">', `<style>\n${await read(new URL('style.css', root))}\n</style>`)
   .replace('<script type="module" src="./src/app.mjs"></script>',
     `<script type="importmap">${JSON.stringify({ imports: map })}</script>\n<script type="module">import "${entry}";</script>`);

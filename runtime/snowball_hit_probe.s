@@ -1,3 +1,5 @@
+@ Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
+@ FFTA Composer — see LICENSE and NOTICE for attribution.
 .syntax unified
 .cpu arm7tdmi
 .thumb
