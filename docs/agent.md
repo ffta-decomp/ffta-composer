@@ -110,3 +110,30 @@ Battle event drafts are available under `battleEvents["snowball.goblin"]`.
 Call `preview` to inspect the typed rule and `buildable` status. Use
 `exportBattleListenerProbe()` when testing the standalone damage hook.
 See [Battle event trial](battle-events.md).
+
+## Declarative story fragments
+
+Import [Herb Picking Arrival](../examples/herb-arrival.json) as a project.
+Its `storyEdits` entry attaches to an existing dialogue in the mission's
+entry scene. The editor renders both alternatives at the anchor.
+`getStory(14)` returns the fragment as a structured `authored` step.
+
+A `say` step inherits the anchor's speaker and presentation. Use a named
+speaker binding to borrow another native line's actor and presentation.
+That actor must already be available in the scene when the fragment runs.
+An `if` step reads a named game flag. Its two paths rejoin and the fragment
+resumes the original dialogue. The example uses native flag 589 as a branch
+input and does not assign it a mission-completion meaning.
+
+The compiler clones the host program and dialogue page into expanded space.
+Only the selected scene uses the clones. The JSON has no jump offsets or
+executable source. The current trigger must be an existing nonvariant
+dialogue site. New quest registration, persistent custom state, new actors
+and battle-time listeners require their own native bindings.
+
+The arrival fixture was replayed in mGBA from a loaded save with each branch
+input set while the first dialogue box was open. Both routes displayed the
+correct alternative, passed the next line to Montblanc and returned to the
+original mission dialogue. The [post-battle example](../examples/herb-field-report.json)
+has build and bytecode coverage. A full victory-to-settlement replay of that
+fixture remains pending.

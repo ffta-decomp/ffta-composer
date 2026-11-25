@@ -13,6 +13,9 @@ site ships one offline-capable HTML file and needs no game inputs for its build.
   repair, duplicate, or add scene entries.
 - **Cutscene** authors the opening cast, dialogue, movement, and facing.
   Goblin Patrol demonstrates the opening, encounter, victory, and continuation.
+- **Declarative story fragments** insert dialogue and flag-driven branches at an
+  existing scene entry. Import the [Herb Picking arrival example](examples/herb-arrival.json)
+  to view it in the story timeline.
 - **Dialogue and script** edit text or native tokens, add dialogue pages, and
   inspect or edit known scene instructions.
 - **Changes and Agent data** review changes, save the project, and export

@@ -1,4 +1,7 @@
 const english = {
+  '剧情片段': 'Story fragment',
+  '若 {0} 已设定': 'If {0} is set',
+  '否则': 'Otherwise',
   '项目': 'Project',
   '场景': 'Scenes',
   '第一幕': 'Opening scene',

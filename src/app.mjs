@@ -194,9 +194,24 @@ function readableDialogue(text) {
   return text?.replace(/〈0x[0-9a-f]+:\d+〉/gi, '〈…〉').replace(/⟨0x[0-9a-f]+⟩/gi, '□');
 }
 
+function renderAuthoredSteps(steps) {
+  const list = el('ol', undefined, 'diff-timeline');
+  for (const step of steps) {
+    const item = el('li');
+    if (step.type === 'say') item.textContent = step.speaker ? `${step.speaker} · ${step.text}` : step.text;
+    else {
+      item.append(el('strong', tr`若 ${step.flag} 已设定`), renderAuthoredSteps(step.then));
+      if (step.else?.length) item.append(el('strong', t('否则')), renderAuthoredSteps(step.else));
+    }
+    list.append(item);
+  }
+  return list;
+}
+
 function renderStory(body, scene) {
   const selectedVariant = state.page?.startsWith(`${PROFILE.dialogue.nested}/`) ? Number(state.page.split('/')[1]) : 0;
   const story = describeStory(state.rom, state.plan, scene.id, selectedVariant);
+  const hasAuthoredFragment = story.steps.some(step => step.kind === 'authored');
   const program = programFor(scene);
   const records = pageRecords(story.page);
   if (scene.id === 1 && state.rom.profile === PROFILE.id) {
@@ -231,6 +246,13 @@ function renderStory(body, scene) {
   let interlude;
   let lineNumber = 0;
   for (const step of story.steps) {
+    if (step.kind === 'authored') {
+      const recipe = el('li', undefined, 'step authored');
+      recipe.append(el('strong', step.recipe.title), renderAuthoredSteps(step.recipe.steps));
+      flow.append(recipe);
+      interlude = null;
+      continue;
+    }
     const item = el('li', undefined, `step ${step.kind}`);
     item.id = step.insertionIndex === undefined ? `step-${step.offset}` : `insertion-${step.insertionIndex}`;
     const heading = el('div', undefined, 'step-head');
@@ -248,7 +270,7 @@ function renderStory(body, scene) {
           variants.push(button(t('在前面插入对白'), () => writeStoryLine(story, program.commands, step, 'insert')),
             button(t('改用新对白'), () => writeStoryLine(story, program.commands, step, 'replace')));
         }
-        if (step.textSelector <= records.length) {
+        if (!hasAuthoredFragment && step.textSelector <= records.length) {
           const edit = button(text, () => editDialogue(story.page, step.textSelector, variants), 'dialogue-preview line-edit');
           edit.setAttribute('aria-label', `${t('编辑对白')} · ${text}`);
           item.append(edit);
@@ -435,7 +457,8 @@ function appendChangePreview(pane, kind, value) {
   }
   const details = el('details');
   details.append(el('summary', t('结构化数据')), el('pre', serialize(value)));
-  if (kind === 'dialogue') pane.append(el('p', readableDialogue(value.text) || t('（空对白）'), 'dialogue-preview'));
+  if (kind === 'story') pane.append(el('p', value.title), renderAuthoredSteps(value.steps));
+  else if (kind === 'dialogue') pane.append(el('p', readableDialogue(value.text) || t('（空对白）'), 'dialogue-preview'));
   else if (kind === 'opening') {
     const timeline = el('ol', undefined, 'diff-timeline');
     for (const step of value.steps) {
@@ -462,7 +485,7 @@ function renderDiff(body) {
     body.append(el('p', t('当前项目没有实际改动。'), 'note'));
     return;
   }
-  const kinds = { opening: '过场编排', battle: '战斗事件', scene: '索引', program: '脚本', page: '对白页', dialogue: '对白' };
+  const kinds = { story: '剧情片段', opening: '过场编排', battle: '战斗事件', scene: '索引', program: '脚本', page: '对白页', dialogue: '对白' };
   for (const change of state.plan.diffs) {
     const item = el('details', undefined, 'change');
     item.append(el('summary', `${t(change.action === 'add' ? '新增' : '修改')} · ${t(kinds[change.kind])} ${change.target}`));
