@@ -1,7 +1,7 @@
 import { check } from '../binary.mjs';
 import { t } from '../i18n.mjs';
 import { blankOpening, DIRECTIONS, OPENING_CAST, OPENING_ID, openingExample } from '../opening.mjs';
-import { $, button, dialog, el, field, handle, notice, number, section, textarea } from './controls.mjs';
+import { button, el, field, handle, notice, number, section, textarea } from './controls.mjs';
 
 const castLabels = {
   marche: '马修', mewt: '缪特', ritz: '莉兹', student: '同学', instructor: '老师',
@@ -23,7 +23,7 @@ function pick(label, value, choices, labels) {
   return { input, label: field(t(label), input) };
 }
 
-export function createCutscenePanel({ getProject, editCollection }) {
+export function createCutscenePanel({ getProject, editCollection, inspector }) {
   function renderOpening(body) {
     const opening = getProject().openings?.[OPENING_ID];
     if (!opening) {
@@ -38,19 +38,21 @@ export function createCutscenePanel({ getProject, editCollection }) {
       icon.className = Object.keys(OPENING_CAST).indexOf(actor.actor) < 5 ? 'cast-ally' : 'cast-enemy';
       const name = el('span', t(castLabels[actor.actor]));
       const entry = button('', () => editOpeningActor(opening, actor));
-      entry.append(icon, name, el('small', `${actor.x}, ${actor.y} · ${t(directionLabels[actor.facing])}`));
+      entry.append(icon, name);
       castCards.append(entry);
     }
     body.append(section(t('登场角色'), button(t('添加角色'), () => editOpeningActor(opening))),
       castCards, section(t('事件时间线'), button(t('添加步骤'), () => editOpeningStep(opening))));
     const timeline = el('ol', undefined, 'opening-timeline');
     opening.steps.forEach((step, index) => {
-      const row = el('li');
+      const row = el('li', undefined, `opening-step ${step.type}`);
       const detail = step.type === 'say' ? step.text : step.type === 'walk'
         ? `(${step.x}, ${step.y}) · ${t(directionLabels[step.facing])}` : t(directionLabels[step.facing]);
-      row.append(el('span', String(index + 1), 'opening-order'), el('strong', t(stepLabels[step.type])),
-        el('span', t(castLabels[step.actor])), el('span', detail, 'opening-detail'),
-        button(t('编辑'), () => editOpeningStep(opening, index)));
+      const entry = button('', () => editOpeningStep(opening, index), 'opening-entry');
+      const heading = el('span', undefined, 'opening-step-head');
+      heading.append(el('strong', t(castLabels[step.actor])), el('small', t(stepLabels[step.type])));
+      entry.append(heading, el('span', detail, 'opening-detail'));
+      row.append(entry);
       timeline.append(row);
     });
     body.append(timeline, section(t('进入战斗'), button(t('编辑'), () => editOpeningBattle(opening))));
@@ -72,9 +74,9 @@ export function createCutscenePanel({ getProject, editCollection }) {
       check(!opening.steps.some(step => step.actor === previous.actor), t('请先移除该角色的时间线步骤。'));
       const cast = opening.cast.filter(member => member !== previous);
       editCollection('openings', OPENING_ID, { ...opening, cast });
-      $('#editor').close();
+      inspector.close();
     })));
-    dialog(t(previous ? '编辑角色' : '添加角色'), [actor.label, x.label, y.label, facing.label, ...extras], () => {
+    inspector.open(t(previous ? '编辑角色' : '添加角色'), [actor.label, x.label, y.label, facing.label, ...extras], () => {
       const member = { actor: actor.input.value, x: x.input.valueAsNumber, y: y.input.valueAsNumber, facing: facing.input.value };
       const cast = previous ? opening.cast.map(item => item === previous ? member : item) : [...opening.cast, member];
       editCollection('openings', OPENING_ID, { ...opening, cast });
@@ -102,9 +104,9 @@ export function createCutscenePanel({ getProject, editCollection }) {
     const extras = [];
     if (previous) extras.push(button(t('删除步骤'), () => {
       editCollection('openings', OPENING_ID, { ...opening, steps: opening.steps.filter((_, i) => i !== index) });
-      $('#editor').close();
+      inspector.close();
     }));
-    dialog(t(previous ? '编辑步骤' : '添加步骤'), [type.label, actor.label, text.label, x.label, y.label, facing.label, position.label, ...extras], () => {
+    inspector.open(t(previous ? '编辑步骤' : '添加步骤'), [type.label, actor.label, text.label, x.label, y.label, facing.label, position.label, ...extras], () => {
       const step = { type: type.input.value, actor: actor.input.value };
       if (step.type === 'say') step.text = text.input.value;
       else step.facing = facing.input.value;
@@ -120,13 +122,13 @@ export function createCutscenePanel({ getProject, editCollection }) {
     Object.assign(title, { value: opening.title, maxLength: 80, required: true });
     const intro = textarea(t('战斗开场对白'), opening.battleIntro, 3);
     const ending = textarea(t('战后对白'), opening.battleEnding ?? blankOpening().battleEnding, 3);
-    dialog(t('编辑第一幕'), [field(t('标题'), title), intro.label, ending.label], () => {
+    inspector.open(t('编辑第一幕'), [field(t('标题'), title), intro.label, ending.label], () => {
       editCollection('openings', OPENING_ID, { ...opening, title: title.value, battleIntro: intro.input.value, battleEnding: ending.input.value });
     });
   }
 
   return {
-    id: 'opening', label: '过场编排', preferredScene: 1, showMetadata: false,
+    id: 'opening', label: '过场编排', preferredScene: 1,
     title: () => getProject().openings?.[OPENING_ID]?.title ?? t('第一幕过场'),
     render: renderOpening,
   };

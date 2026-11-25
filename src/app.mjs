@@ -11,8 +11,16 @@ import { $, button, dialog, download, downloadJson, el, field, handle, notice, n
 import { createBattleEventPanel } from './ui/battle-event.mjs';
 import { createCutscenePanel } from './ui/cutscene.mjs';
 import { createPanelRegistry } from './ui/panels.mjs';
+import { createInspector } from './ui/inspector.mjs';
+import { bindMenus } from './ui/menus.mjs';
+import { drawTerrain } from './ui/terrain.mjs';
+import { OPENING_ID } from './opening.mjs';
+import { dialogueTextRuns, editDialogueRuns } from './text.mjs';
 
 const localize = localizeShell(document.body);
+const inspector = createInspector();
+drawTerrain($('#terrain'));
+bindMenus();
 const state = { rom: null, name: '', project: null, plan: null, scenes: [], selected: 1, tab: 'story', page: null,
   query: '', filter: 'all', undo: [], redo: [], saved: '' };
 const statusKeys = { added: '新增', unresolved: '待补全', changed: '已修改', retail: '原版' };
@@ -53,12 +61,13 @@ function restore(collection, key) {
 
 async function load(bytes, name) {
   const { rom, project } = await openRom(bytes);
+  inspector.close({ restoreFocus: false });
   Object.assign(state, { rom, name, selected: 1, tab: 'story', page: null, query: '', filter: 'all',
     undo: [], redo: [], saved: serialize(project) });
   $('#search').value = '';
   $('#filter').value = 'all';
   update(project);
-  notice(t('ROM 就绪'));
+  $('#scene-title').focus();
 }
 
 function currentScene() {
@@ -90,11 +99,17 @@ function programFor(scene) {
 
 function sceneStatus(scene) {
   if (scene.id >= PROFILE.index.count) return ['added', false];
+  if (scene.id === 1 && state.project.openings?.[OPENING_ID]) return ['changed', false];
   if (scene.id === BATTLE_SCENE && state.plan.battles.size) return ['changed', false];
   if (!programFor(scene)?.commands.length) return ['unresolved', true];
   if (state.plan.scenes.has(scene.id) || state.plan.programs.has(programKey(scene.script.group, scene.script.program)) ||
     state.plan.dialogue.has(activePage(scene))) return ['changed', false];
   return ['retail', false];
+}
+
+function sceneTitle(scene) {
+  if (scene.id === 1) return state.project.openings?.[OPENING_ID]?.title ?? t('第一幕');
+  return tr`场景 ${String(scene.id).padStart(3, '0')}`;
 }
 
 function renderList() {
@@ -110,18 +125,27 @@ function renderList() {
     if (state.filter === 'changed' && !['changed', 'added'].includes(status)) continue;
     if (state.filter === 'unresolved' && !warning) continue;
     const query = state.query.trim().toLowerCase();
-    if (query && ![String(scene.id), hex(scene.id), text.toLowerCase()].some(value => value.includes(query))) continue;
+    const title = sceneTitle(scene);
+    if (query && ![String(scene.id), title, hex(scene.id), text].some(value => value.toLowerCase().includes(query))) continue;
     const row = button('', () => {
+      inspector.close({ restoreFocus: false });
       state.selected = scene.id;
       const { preferredScene } = panels.get(state.tab);
       if (preferredScene !== undefined && scene.id !== preferredScene) state.tab = 'story';
       state.page = null;
       render();
+      nav.querySelector('[aria-current="true"]')?.focus({ preventScroll: true });
     }, 'scene-link');
     row.dataset.scene = scene.id;
     if (scene.id === state.selected) row.setAttribute('aria-current', 'true');
-    row.append(el('span', String(scene.id).padStart(3, '0'), 'id'), el('span', text || t(statusKeys[status]), 'excerpt'));
-    if (status !== 'retail') row.append(el('span', warning ? '◇' : '●', 'dot'));
+    const useExcerpt = scene.id !== 1 && Boolean(text);
+    row.append(el('span', useExcerpt ? text : title, 'scene-link-title'));
+    if (status !== 'retail') {
+      const marker = el('span', warning ? '◇' : '◆', 'dot');
+      marker.setAttribute('aria-label', t(statusKeys[status]));
+      row.append(marker);
+    }
+    if (text) row.append(el('span', useExcerpt ? title : text, 'excerpt'));
     fragment.append(row);
     count++;
   }
@@ -135,29 +159,31 @@ function renderList() {
 function render() {
   const ready = Boolean(state.rom);
   $('#welcome').hidden = ready;
-  if (!ready) $('#rom-name').textContent = t('未载入 ROM');
+  $('#rom-name').hidden = !ready;
   $('#workspace').hidden = !ready;
-  document.querySelectorAll('[data-needs-rom]').forEach(node => { node.disabled = !ready; });
+  $('#export-rom').hidden = !ready;
+  document.querySelectorAll('.menu-items [data-needs-rom]').forEach(node => { node.hidden = !ready; });
   if (!ready) return;
   $('#rom-name').textContent = state.name;
   renderList();
   const scene = currentScene();
   const [status, warning] = sceneStatus(scene);
-  $('#crumb-scene').textContent = String(scene.id);
   const panel = panels.get(state.tab);
-  $('#scene-title').textContent = panel.title?.(scene) ?? tr`场景 ${String(scene.id).padStart(3, '0')}`;
+  $('#scene-title').textContent = panel.title?.(scene) ?? sceneTitle(scene);
+  $('#scene-status').hidden = status === 'retail';
   $('#scene-status').textContent = t(statusKeys[status]);
   $('#scene-status').classList.toggle('warn', warning);
-  $('#scene-meta').hidden = panel.showMetadata === false;
-  $('#scene-meta').textContent = tr`脚本 ${programKey(scene.script.group, scene.script.program)} · 对白页 ${scene.dialoguePage}`;
   $('#undo').disabled = !state.undo.length;
   $('#redo').disabled = !state.redo.length;
-  $('#footer-status').textContent = serialize(state.project) === state.saved ? t('项目已保存或无改动') : t('项目有未保存的编辑');
+  $('#footer-status').textContent = serialize(state.project) === state.saved ? '' : t('未保存');
+  const secondary = panel.secondary === true;
+  $('#scene-tools').classList.toggle('active', secondary);
+  $('#scene-tools-label').textContent = t(secondary ? panel.label : '场景工具');
   for (const { panel, element } of tabs) {
     const count = panel.id === 'diff' && state.plan.diffs.length;
     element.textContent = t(panel.label) + (count ? ` ${count}` : '');
     element.hidden = panel.retailOnly === true && state.rom.profile !== PROFILE.id;
-    element.setAttribute('aria-selected', String(panel.id === state.tab));
+    element.setAttribute('aria-pressed', String(panel.id === state.tab));
   }
   const body = $('#detail-body');
   body.replaceChildren();
@@ -172,8 +198,11 @@ function renderStory(body, scene) {
   const selectedVariant = state.page?.startsWith(`${PROFILE.dialogue.nested}/`) ? Number(state.page.split('/')[1]) : 0;
   const story = describeStory(state.rom, state.plan, scene.id, selectedVariant);
   const program = programFor(scene);
-  body.append(section(t('剧情流程'), button(t('编辑索引'), () => editIndex(scene)),
-    button(t('复制为新场景'), () => createScene(scene))));
+  const records = pageRecords(story.page);
+  if (scene.id === 1 && state.rom.profile === PROFILE.id) {
+    const opening = button(t('编排第一幕'), () => selectPanel('opening'), 'opening-link');
+    body.append(opening);
+  }
 
   if (scene.dialoguePage === PROFILE.dialogue.nested) {
     const variants = el('select');
@@ -184,7 +213,11 @@ function renderStory(body, scene) {
       variants.append(option);
     }
     variants.value = story.page;
-    variants.onchange = () => { state.page = variants.value; render(); };
+    variants.onchange = () => {
+      inspector.close({ restoreFocus: false });
+      state.page = variants.value;
+      render();
+    };
     body.append(variants);
   }
   if (!story.steps.length) {
@@ -209,23 +242,26 @@ function renderStory(body, scene) {
     if (step.kind === 'dialogue') {
       const actions = el('div', undefined, 'buttons');
       if (step.dialogue) {
-        item.append(el('p', readableDialogue(step.dialogue.text) ?? t('此页缺少该对白。'), 'dialogue-preview'));
-        const records = pageRecords(story.page);
-        if (step.textSelector <= records.length) {
-          actions.append(button(step.dialogue.text === null ? t('补全对白') : t('编辑对白'),
-            () => editDialogue(story.page, step.textSelector), 'accent'));
-        }
+        const text = readableDialogue(step.dialogue.text) ?? t('此页缺少该对白。');
+        const variants = [];
         if (records.length <= 239 && scene.dialoguePage !== PROFILE.dialogue.nested && step.insertionIndex === undefined) {
-          actions.append(button(t('改用新对白'), () => writeStoryLine(story, program.commands, step, 'replace')),
-            button(t('在前面插入对白'), () => writeStoryLine(story, program.commands, step, 'insert')));
+          variants.push(button(t('在前面插入对白'), () => writeStoryLine(story, program.commands, step, 'insert')),
+            button(t('改用新对白'), () => writeStoryLine(story, program.commands, step, 'replace')));
+        }
+        if (step.textSelector <= records.length) {
+          const edit = button(text, () => editDialogue(story.page, step.textSelector, variants), 'dialogue-preview line-edit');
+          edit.setAttribute('aria-label', `${t('编辑对白')} · ${text}`);
+          item.append(edit);
+        } else {
+          item.append(el('p', text, 'dialogue-preview'));
         }
       } else {
         item.append(el('p', t('引用原版备用对白'), 'note'));
       }
       if (!step.dialogue) actions.append(button(t('参数'), () => editInstruction(key, program.commands, step.index)));
-      item.append(actions);
+      if (actions.childElementCount) item.append(actions);
     } else if (step.kind === 'native') {
-      item.append(button(t('在脚本中查看'), () => { state.tab = 'script'; render(); }));
+      item.append(button(t('在脚本中查看'), () => selectPanel('script')));
     } else {
       const spec = [...state.rom.specs.values()].find(value => value.operation === step.operation);
       item.append(el('p', t(spec.label), 'step-label'));
@@ -287,7 +323,7 @@ function writeStoryLine(story, commands, step, mode) {
     option.dataset.presentationFlags = String(event.presentationFlags);
     speaker.append(option);
   }
-  dialog(t(mode === 'insert' ? '在前面插入对白' : '改用新对白'),
+  inspector.open(t(mode === 'insert' ? '在前面插入对白' : '改用新对白'),
     mode === 'insert' ? [text.label, field(t('说话者'), speaker)] : [text.label],
     () => {
       const project = structuredClone(state.project);
@@ -348,21 +384,30 @@ function renderDialogue(body, scene) {
     selector.append(option);
   }
   selector.value = address;
-  selector.addEventListener('change', () => { state.page = selector.value; render(); });
+  selector.addEventListener('change', () => {
+    inspector.close({ restoreFocus: false });
+    state.page = selector.value;
+    render();
+  });
   const records = pageRecords(address);
-  body.append(section(t('对白内容'), selector,
-    button(t('导入对白 JSON'), () => dialogueImport(address)),
+  const actions = el('details', undefined, 'inline-tools');
+  const tools = el('div', undefined, 'buttons');
+  tools.append(selector, button(t('导入对白 JSON'), () => dialogueImport(address)),
+    button(t('复制对白页并关联到当前场景'), () => clonePage(scene, address)));
+  actions.append(el('summary', t('对白页工具')), tools);
+  body.append(section(t('对白内容'), actions,
     button(t('＋ 新增对白'), () => editDialogue(address, records.length), 'accent')));
   const sharing = state.scenes.filter(row => row.dialoguePage === Number(address.split('/')[0])).length;
   if (sharing > 1) body.append(el('p', tr`这个对白页被 ${sharing} 个场景索引引用。若只改当前场景，可先复制它的对白页再重新关联。`, 'note'));
-  const copy = button(t('复制对白页并关联到当前场景'), () => clonePage(scene, address));
-  body.append(copy, el('p', t('展开一行的结构化编辑可以查看和保留控制码、字形编号与编码。'), 'note'));
-  body.append(table([t('行号'), t('对白'), t('编码'), ''], records.map((record, line) => [
-    el('span', String(line).padStart(3, '0'), 'code'),
-    record.preview || t('（空）'),
-    record.edited ? t('已修改') : record.encoding === 'alternate' ? t('半宽') : t('标准'),
-    button(tr`编辑 ${line}`, () => editDialogue(address, line)),
-  ])));
+  const list = el('ol', undefined, 'dialogue-list');
+  records.forEach((record, line) => {
+    const item = el('li', undefined, 'dialogue-row');
+    const edit = button(readableDialogue(record.preview) || t('（空）'), () => editDialogue(address, line), 'line-edit');
+    item.append(el('span', String(line + 1).padStart(2, '0'), 'line-number'), edit);
+    if (record.edited) item.append(el('span', t('已修改'), 'line-change'));
+    list.append(item);
+  });
+  body.append(list);
 }
 
 function renderScript(body, scene) {
@@ -383,6 +428,34 @@ function renderScript(body, scene) {
   })));
 }
 
+function appendChangePreview(pane, kind, value) {
+  if (!value) {
+    pane.append(el('p', t('无'), 'note'));
+    return;
+  }
+  const details = el('details');
+  details.append(el('summary', t('结构化数据')), el('pre', serialize(value)));
+  if (kind === 'dialogue') pane.append(el('p', readableDialogue(value.text) || t('（空对白）'), 'dialogue-preview'));
+  else if (kind === 'opening') {
+    const timeline = el('ol', undefined, 'diff-timeline');
+    for (const step of value.steps) {
+      const action = step.type === 'say' ? step.text : t(step.type === 'walk' ? '移动' : '转身');
+      timeline.append(el('li', action));
+    }
+    pane.append(el('p', value.title), timeline);
+  } else if (kind === 'battle') {
+    pane.append(el('p', value.dialogue.text, 'dialogue-preview'));
+  } else if (kind === 'scene') {
+    pane.append(el('p', tr`脚本 ${programKey(value.script.group, value.script.program)} · 对白页 ${value.dialoguePage}`, 'note'));
+  } else if (kind === 'program') {
+    if (value.instructions) pane.append(el('p', tr`${value.instructions.length} 条指令`, 'note'));
+    if (value.insertDialogue?.length) pane.append(el('p', tr`插入 ${value.insertDialogue.length} 条对白`, 'note'));
+  } else if (kind === 'page') {
+    pane.append(el('p', value.cloneFrom === null ? t('空白对白页') : tr`复制对白页 ${value.cloneFrom}`, 'note'));
+  }
+  pane.append(details);
+}
+
 function renderDiff(body) {
   body.append(section(t('待导出的改动'), button(t('导出差异 JSON'), handle(exportDiff))));
   if (!state.plan.diffs.length) {
@@ -397,14 +470,7 @@ function renderDiff(body) {
     for (const [title, value] of [[t('修改前'), change.before], [t('修改后'), change.after]]) {
       const pane = el('div', undefined, 'pane');
       pane.append(el('strong', title));
-      if (change.kind === 'dialogue' && value) {
-        pane.append(el('p', value.text || t('（空对白）'), 'dialogue-preview'));
-        const source = el('details');
-        source.append(el('summary', t('结构化数据')), el('pre', serialize(value)));
-        pane.append(source);
-      } else {
-        pane.append(el('pre', value === null ? t('无') : serialize(value)));
-      }
+      appendChangePreview(pane, change.kind, value);
       panes.append(pane);
     }
     item.append(panes);
@@ -504,17 +570,18 @@ function clonePage(scene, address) {
   });
 }
 
-function editDialogue(address, index) {
+function editDialogue(address, index, actions = []) {
   const record = pageRecords(address)[index];
   const key = lineKey(address, index);
   const mode = el('select');
-  for (const [value, label] of [['text', t('纯文本')], ['tokens', t('结构化 token')]]) {
-    const option = el('option', label);
+  const modes = record?.tokens ? [['safe', '保留控制码'], ['text', '替换为纯文本'], ['tokens', '结构化 token']]
+    : [['text', '纯文本'], ['tokens', '结构化 token']];
+  for (const [value, label] of modes) {
+    const option = el('option', t(label));
     option.value = value;
     mode.append(option);
   }
-  mode.value = record ? 'tokens' : 'text';
-  const content = textarea(t('纯文本'), record?.preview ?? '', 4);
+  const content = textarea(t('对白'), record?.preview ?? '', 4);
   const tokens = textarea(t('结构化 token JSON'), serialize(record?.tokens ?? []));
   const encoding = el('select');
   for (const [value, label] of [['alternate', t('半宽')], ['standard', t('标准')]]) {
@@ -523,21 +590,48 @@ function editDialogue(address, index) {
     encoding.append(option);
   }
   encoding.value = record?.encoding ?? 'standard';
-  const choice = field(t('编码'), encoding);
   const flags = number(t('样式标志'), record?.flags ?? 16, 0, 65535);
-  const controls = record ? el('p', record.tokens.filter(token => token.kind === 'control').map(token => ({ 0x52: t('空格'), 0x4d: t('换行'), 0x32: t('双字符串') })[token.code] ?? tr`控制码 ${hex(token.code)}`).join(' · '), 'note') : el('span');
-  const refresh = () => {
+  const native = el('details', undefined, 'inline-tools');
+  native.append(el('summary', t('格式与控制码')), field(t('编辑方式'), mode),
+    tokens.label, field(t('编码'), encoding), flags.label);
+  const storyText = el('div', undefined, 'inspect-dialogue');
+  const runs = dialogueTextRuns(record?.tokens ?? [], encoding.value);
+  const inputs = runs.map((run, i) => {
+    if (run.editable) {
+      const rows = Math.min(6, Math.max(2, run.text.split('\n').length));
+      const { label, input } = textarea(t('对白'), run.text, rows);
+      storyText.append(label);
+      return input;
+    }
+    const code = run.tokens[0].code;
+    const label = code === 0x4f ? '换页' : code === 0x51 ? '游戏文本变量' : '原版格式';
+    if (i < runs.length - 1 || run.text) {
+      const lockedText = code === 0x51 ? t(label) : readableDialogue(run.text).trim() || t(label);
+      storyText.append(el('small', lockedText, 'native-block'));
+    }
+    return null;
+  });
+  function refresh() {
+    storyText.hidden = mode.value !== 'safe';
     content.label.hidden = mode.value !== 'text';
     tokens.label.hidden = mode.value !== 'tokens';
-  };
+    encoding.disabled = mode.value === 'safe';
+    if (encoding.disabled) encoding.value = record.encoding;
+  }
   mode.addEventListener('change', refresh);
   refresh();
-  const reset = state.project.dialogue[key] ? [button(t('还原这一行'), handle(() => {
+  const extras = el('div', undefined, 'buttons');
+  extras.append(...actions);
+  if (state.project.dialogue[key]) extras.append(button(t('还原这一行'), handle(() => {
     restore('dialogue', key);
-    $('#editor').close();
-  }))] : [];
-  dialog(tr`对白 ${key}`, [field(t('编辑方式'), mode), controls, content.label, tokens.label, choice, flags.label, ...reset], () => {
-    const data = mode.value === 'tokens' ? { tokens: JSON.parse(tokens.input.value) } : { text: content.input.value };
+    inspector.close();
+  })));
+  inspector.open(t('编辑对白'), [storyText, content.label, native, extras], () => {
+    const data = mode.value === 'tokens' ? { tokens: JSON.parse(tokens.input.value) }
+      : mode.value === 'text' ? { text: content.input.value }
+        : { tokens: editDialogueRuns(runs, inputs.map(input => input?.value), encoding.value) };
+    if (record && serialize(data.tokens) === serialize(record.tokens) &&
+      encoding.value === record.encoding && flags.input.valueAsNumber === record.flags) return;
     editCollection('dialogue', key, { ...data, encoding: encoding.value, flags: flags.input.valueAsNumber });
   });
 }
@@ -579,7 +673,7 @@ function editInstruction(key, commands, index) {
   const spec = [...state.rom.specs.values()].find(item => item.operation === command.operation);
   const inputs = spec.operands.map(arg => number(arg.key, command.operands[arg.key],
     arg.signed ? -32768 : 0, arg.key === 'bit' ? 15 : arg.size === 1 ? 255 : arg.signed ? 32767 : 65535));
-  dialog(t(spec.label), inputs.length ? inputs.map(input => input.label) : [el('p', t('该指令没有操作数。'), 'note')], () => {
+  inspector.open(t(spec.label), inputs.length ? inputs.map(input => input.label) : [el('p', t('该指令没有操作数。'), 'note')], () => {
     command.operands = Object.fromEntries(spec.operands.map((arg, i) => [arg.key, inputs[i].input.valueAsNumber]));
     editCollection('programs', key, { ...state.project.programs[key], instructions: draft });
   });
@@ -630,35 +724,43 @@ $('#export-rom').onclick = handle(() => {
   notice(tr`ROM 已导出 · ${changes.length} 项改动`);
 });
 $('#undo').onclick = () => {
+  inspector.close({ restoreFocus: false });
   state.redo.push(state.project);
   update(state.undo.pop());
 };
 $('#redo').onclick = () => {
+  inspector.close({ restoreFocus: false });
   state.undo.push(state.project);
   update(state.redo.pop());
 };
 const panels = createPanelRegistry([
-  { id: 'story', label: '剧情', showMetadata: false, render: renderStory },
-  { ...createCutscenePanel({ getProject: () => state.project, editCollection }), retailOnly: true },
-  { id: 'index', label: '索引', render: renderIndex },
+  { id: 'story', label: '剧情', render: renderStory },
+  { ...createCutscenePanel({ getProject: () => state.project, editCollection, inspector }), retailOnly: true, secondary: true },
+  { id: 'index', label: '场景关联', render: renderIndex, secondary: true },
   { id: 'dialogue', label: '对白', render: renderDialogue },
   { ...createBattleEventPanel({
     getPlan: () => state.plan, getRom: () => state.rom, editCollection, restore,
-  }), retailOnly: true },
-  { id: 'script', label: '脚本', render: renderScript },
+  }), retailOnly: true, secondary: true },
+  { id: 'script', label: '脚本', render: renderScript, secondary: true },
   { id: 'diff', label: '改动', render: renderDiff },
 ]);
+function selectPanel(id) {
+  inspector.close({ restoreFocus: false });
+  state.tab = id;
+  const { preferredScene, secondary } = panels.get(id);
+  if (preferredScene !== undefined) {
+    state.selected = preferredScene;
+    state.page = null;
+  }
+  $('#detail-body').scrollTop = 0;
+  render();
+  if (secondary) $('#scene-title').focus({ preventScroll: true });
+}
+
 const tabs = panels.list.map(panel => {
-  const element = button('', () => {
-    state.tab = panel.id;
-    if (panel.preferredScene !== undefined) {
-      state.selected = panel.preferredScene;
-      state.page = null;
-    }
-    render();
-  });
+  const element = button('', () => selectPanel(panel.id));
   element.dataset.tab = panel.id;
-  $('#workspace-tabs').append(element);
+  $(panel.secondary ? '#extra-tabs' : '#workspace-tabs').append(element);
   return { panel, element };
 });
 $('#agent').onclick = () => dialog(t('Agent 数据交换'), [
@@ -671,6 +773,7 @@ window.addEventListener('beforeunload', event => {
   if (state.rom && state.saved !== serialize(state.project)) event.preventDefault();
 });
 function applyLanguage(value) {
+  inspector.close({ restoreFocus: false });
   localize(value);
   $('#language').value = document.documentElement.lang;
   try { localStorage.setItem('ffta.scene.locale', document.documentElement.lang); }

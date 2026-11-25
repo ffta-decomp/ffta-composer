@@ -11,7 +11,7 @@ import { createPanelRegistry } from '../src/ui/panels.mjs';
 import { catalog } from '../src/rom.mjs';
 import { describeStory } from '../src/story.mjs';
 import { setLanguage, t, tr } from '../src/i18n.mjs';
-import { encodeLine, makePage, plainTokens, readLine } from '../src/text.mjs';
+import { dialogueTextRuns, editDialogueRuns, encodeLine, makePage, plainTokens, readLine } from '../src/text.mjs';
 
 test('plain scene dialogue round-trips text, line breaks and its native continuation controls', () => {
   const text = 'A new story!\nSee you soon.';
@@ -24,6 +24,22 @@ test('plain scene dialogue round-trips text, line breaks and its native continua
   assert.deepEqual(tokens.slice(-2).map(token => token.code), [0x40, 0x42]);
   assert.throws(() => plainTokens('新对白'), /Glyph unavailable/);
   assert.throws(() => makePage([new Uint8Array(65535)]), /16-bit/);
+});
+
+test('editing dialogue paragraphs preserves native page, variable and continuation controls', () => {
+  const encoding = 'standard';
+  const pageBreak = { kind: 'control', code: 0x4f, args: [] };
+  const variable = { kind: 'control', code: 0x51, args: [3] };
+  const original = [
+    ...plainTokens('Hello!', encoding).slice(0, -2), pageBreak, variable, ...plainTokens('Welcome.', encoding),
+  ];
+  const runs = dialogueTextRuns(original, encoding);
+  assert.deepEqual(runs.filter(run => run.editable).map(run => run.text), ['Hello!', 'Welcome.']);
+  assert.deepEqual(editDialogueRuns(runs, runs.map(run => run.text), encoding), original);
+  const edited = editDialogueRuns(runs, ['Look out!', undefined, 'Welcome.'], encoding);
+  assert.deepEqual(edited.slice(plainTokens('Look out!').length - 2), original.slice(plainTokens('Hello!').length - 2));
+  const encoded = encodeLine(edited, encoding, 16);
+  assert.deepEqual(readLine(encoded, 0, encoded.length).tokens, edited);
 });
 
 test('i18n renders labels and interpolated messages without changing project data', () => {

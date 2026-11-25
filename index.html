@@ -9,13 +9,19 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="brand-icon" aria-hidden="true">◆</span><div><strong>FFTA Composer</strong><small>FINAL FANTASY TACTICS ADVANCE · US</small></div></div>
-  <div class="project-lamp" id="rom-name">未载入 ROM</div>
+  <div class="brand"><span class="brand-icon" aria-hidden="true"></span><strong>FFTA Composer</strong></div>
+  <div class="project-lamp" id="rom-name" hidden>未载入 ROM</div>
   <div class="top-actions">
-    <select id="language" aria-label="界面语言"><option value="zh-CN">简体中文</option><option value="en">English</option></select>
-    <button id="open-rom">打开 ROM</button>
-    <button id="import-project" data-needs-rom>导入项目</button>
-    <button id="save-project" data-needs-rom>保存项目</button>
+    <details class="menu" id="project-menu">
+      <summary>项目<span class="chevron" aria-hidden="true"></span></summary>
+      <div class="menu-items">
+        <button id="open-rom">打开 ROM</button>
+        <button id="import-project" data-needs-rom>导入项目</button>
+        <button id="save-project" data-needs-rom>保存项目</button>
+        <button id="agent" data-needs-rom>Agent 数据</button>
+        <label class="language"><span>界面语言</span><select id="language" aria-label="界面语言"><option value="zh-CN">简体中文</option><option value="en">English</option></select></label>
+      </div>
+    </details>
     <button id="export-rom" class="accent" data-needs-rom>导出 ROM</button>
   </div>
 </header>
@@ -24,36 +30,55 @@
 <div id="notice" role="status" hidden></div>
 
 <main id="welcome">
+  <div class="welcome-scene" aria-hidden="true"><canvas id="terrain" width="320" height="208"></canvas></div>
   <div class="welcome-content">
-    <span class="welcome-icon" aria-hidden="true">◆</span>
-    <h1>打开美版 ROM</h1>
-    <p>浏览剧情、台词和场景指令。在导出前查看每项改动。</p>
-    <button class="accent" id="welcome-open">选择本地 ROM</button>
-    <small>支持 US 原版及此编辑器导出的 ROM · 文件只在本机处理</small>
+    <h1>FFTA Composer</h1>
+    <p>剧情与过场编辑器</p>
+    <button class="accent" id="welcome-open">打开美版 ROM</button>
+    <small>文件只在本机处理</small>
   </div>
 </main>
+
 <main class="workspace" id="workspace" hidden>
   <aside class="index" aria-label="剧情索引">
-    <div class="index-head"><div><h2>剧情索引</h2><small id="scene-count"></small></div><button id="new-scene" aria-label="新增场景">＋ 场景</button></div>
+    <div class="index-head"><h2>场景</h2><button id="new-scene" class="add-scene" aria-label="新增场景">+</button></div>
     <div class="filters">
-      <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="场景编号、对白" aria-label="搜索场景"></label>
+      <label class="search"><span aria-hidden="true"></span><input id="search" type="search" placeholder="搜索场景" aria-label="搜索场景"></label>
       <select id="filter" aria-label="筛选场景"><option value="all">全部场景</option><option value="changed">已修改</option><option value="unresolved">待补全</option></select>
     </div>
+    <small id="scene-count" hidden></small>
     <nav id="scene-list" aria-label="场景列表"></nav>
+    <div class="index-foot">
+      <span id="footer-status" role="status"></span>
+      <div class="history"><button id="undo" aria-label="撤销">↶</button><button id="redo" aria-label="重做">↷</button></div>
+    </div>
   </aside>
   <section class="detail" aria-label="场景内容">
     <div class="detail-head">
-      <div class="crumb">剧情索引 <span aria-hidden="true">/</span> <span id="crumb-scene"></span></div>
-      <div class="scene-title"><h1 id="scene-title"></h1><span id="scene-status" class="badge"></span></div>
-      <p id="scene-meta"></p>
+      <div class="scene-title"><h1 id="scene-title" tabindex="-1"></h1><span id="scene-status"></span></div>
+      <div class="detail-bar">
+        <div class="tabs" id="workspace-tabs" aria-label="工作区标签"></div>
+        <details class="menu scene-tools" id="scene-tools">
+          <summary aria-label="场景工具"><span id="scene-tools-label">场景工具</span><span class="chevron" aria-hidden="true"></span></summary>
+          <div class="menu-items" id="extra-tabs"></div>
+        </details>
+      </div>
     </div>
-    <div class="tabs" id="workspace-tabs" aria-label="工作区标签"></div>
-    <div id="detail-body"></div>
+    <div class="editing-area">
+      <div id="detail-body"></div>
+      <aside class="inspector" id="inspector" aria-labelledby="inspect-title" hidden>
+        <form id="inspect-form">
+          <div class="inspect-head"><h2 id="inspect-title"></h2><button type="button" id="close-inspector" aria-label="关闭">×</button></div>
+          <div id="inspect-fields"></div>
+          <p id="inspect-error" role="alert" hidden></p>
+          <div class="inspect-actions"><button class="accent" type="submit">应用</button></div>
+        </form>
+      </aside>
+    </div>
   </section>
-  <footer class="workspace-footer"><span id="footer-status"></span><div><button id="undo">撤销</button><button id="redo">重做</button><button id="agent">Agent 数据</button></div></footer>
 </main>
 
-<dialog id="editor">
+<dialog id="editor" aria-labelledby="edit-title">
   <form id="edit-form" method="dialog">
     <div class="dialog-head"><h2 id="edit-title"></h2><button type="button" id="close-dialog" aria-label="关闭">×</button></div>
     <div id="edit-fields"></div>

@@ -142,6 +142,35 @@ export function plainTokens(text, encoding = 'standard') {
   return [...tokens, { kind: 'control', code: 0x40, args: [] }, { kind: 'control', code: 0x42, args: [] }];
 }
 
+export function dialogueTextRuns(tokens, encoding) {
+  const runs = [];
+  for (const token of tokens) {
+    const editable = token.kind === 'glyph' ||
+      (token.kind === 'control' && (token.code === 0x52 || token.code === 0x4d));
+    const last = runs.at(-1);
+    if (last?.editable === editable) last.tokens.push(token);
+    else runs.push({ editable, tokens: [token] });
+  }
+  return runs.map(run => {
+    const text = preview(run.tokens);
+    if (run.editable) {
+      try {
+        const encoded = plainTokens(text, encoding).slice(0, -2);
+        if (JSON.stringify(encoded) === JSON.stringify(run.tokens)) return { ...run, text };
+      } catch {
+        // An unmapped glyph can still be preserved or edited as a native token.
+      }
+    }
+    return { ...run, editable: false, text };
+  });
+}
+
+export function editDialogueRuns(runs, values, encoding) {
+  return runs.flatMap((run, index) => run.editable && values[index] !== run.text
+    ? plainTokens(values[index], encoding).slice(0, -2)
+    : run.tokens);
+}
+
 export function encodeLine(tokens, encoding, flags) {
   check(Array.isArray(tokens) && tokens.length <= 2048, 'Invalid dialogue token count');
   check(encoding === 'standard' || encoding === 'alternate', 'Unknown dialogue encoding');
