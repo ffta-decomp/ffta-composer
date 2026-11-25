@@ -3,9 +3,9 @@
 [Open the editor on GitHub Pages](https://ffta-decomp.github.io/ffta-composer/)
 
 Edit scenes and dialogue for Final Fantasy Tactics Advance (USA) in a browser.
-The editor reads a ROM selected on your device, saves declarative project JSON,
-and exports a separate ROM. English and Simplified Chinese are available. The
-site ships one offline-capable HTML file and needs no game inputs for its build.
+The editor reads a local ROM, saves a declarative project as JSON or Lua, and
+exports a separate ROM. English and Simplified Chinese are available. The site
+ships one offline-capable HTML file and needs no game inputs for its build.
 
 ## Current tools
 
@@ -14,8 +14,8 @@ site ships one offline-capable HTML file and needs no game inputs for its build.
 - **Cutscene** authors the opening cast, dialogue, movement, and facing.
   Goblin Patrol demonstrates the opening, encounter, victory, and continuation.
 - **Declarative story fragments** insert dialogue and flag-driven branches at an
-  existing scene entry. Import the [Herb Picking arrival example](examples/herb-arrival.json)
-  to view it in the story timeline.
+  existing scene entry. Open the Herb Picking example in the story timeline
+  by importing the [JSON](examples/herb-arrival.json) or [Lua](examples/herb-arrival.lua) project.
 - **Dialogue and script** edit text or native tokens, add dialogue pages, and
   inspect or edit known scene instructions.
 - **Changes and Agent data** review changes, save the project, and export

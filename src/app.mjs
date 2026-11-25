@@ -4,6 +4,7 @@ import { catalog, lineKey, pageKey, programKey } from './rom.mjs';
 import { BATTLE_SCENE } from './battle.mjs';
 import { buildBattleListenerProbe } from './battle-probes.mjs';
 import { build, importProject, inspectRom, openRom, plan, previewBuild } from './project.mjs';
+import { formatProjectText, parseProjectText } from './project-text.mjs';
 import { localizeShell, t, tr } from './i18n.mjs';
 import { describeStory } from './story.mjs';
 import { $, button, dialog, download, downloadJson, el, field, handle, notice, number, section,
@@ -728,18 +729,21 @@ $('#rom-file').onchange = handle(async event => {
 $('#project-file').onchange = handle(async event => {
   const file = event.target.files[0];
   event.target.value = '';
-  if (file) importDialog(JSON.parse(await file.text()));
+  if (file) importDialog(parseProjectText(await file.text()));
 });
 $('#search').oninput = event => { state.query = event.target.value; renderList(); };
 $('#filter').onchange = event => { state.filter = event.target.value; renderList(); };
 $('#new-scene').onclick = () => createScene();
 $('#close-dialog').onclick = $('#cancel-dialog').onclick = () => $('#editor').close();
-$('#save-project').onclick = () => {
-  downloadJson('ffta.scene.project.json', state.project);
+function saveProject(format) {
+  const mime = format === 'lua' ? 'text/x-lua' : 'application/json';
+  download(`ffta.scene.project.${format}`, formatProjectText(state.project, format), mime);
   state.saved = serialize(state.project);
   render();
-  notice(t('已生成项目 JSON'));
-};
+  notice(tr`已保存项目 · ${format === 'lua' ? 'Lua' : 'JSON'}`);
+}
+$('#save-project').onclick = handle(() => saveProject('json'));
+$('#save-project-lua').onclick = handle(() => saveProject('lua'));
 $('#export-rom').onclick = handle(() => {
   check(!state.plan.battles.size, t('战斗事件还需运行时接入，完整 ROM 暂不可导出。'));
   const { bytes, changes } = build(state.rom, state.project);
@@ -820,14 +824,20 @@ window.fftaSceneEditor = Object.freeze({
     return structuredClone(describeStory(state.rom, state.plan, id, variant));
   },
   getProject() { check(state.rom, 'Open a ROM first'); return structuredClone(state.project); },
+  exportProject(format = 'json') {
+    check(state.rom, 'Open a ROM first');
+    return formatProjectText(state.project, format);
+  },
   preview(incoming, mode = 'merge') {
     check(state.rom, 'Open a ROM first');
-    const candidate = importProject(state.rom, state.project, incoming, mode);
+    const input = typeof incoming === 'string' ? parseProjectText(incoming) : incoming;
+    const candidate = importProject(state.rom, state.project, input, mode);
     return previewBuild(state.rom, candidate);
   },
   apply(incoming, mode = 'merge') {
     check(state.rom, 'Open a ROM first');
-    commit(importProject(state.rom, state.project, incoming, mode));
+    const input = typeof incoming === 'string' ? parseProjectText(incoming) : incoming;
+    commit(importProject(state.rom, state.project, input, mode));
   },
   exportRom() { check(state.rom, 'Open a ROM first'); return build(state.rom, state.project).bytes; },
   exportBattleListenerProbe() {

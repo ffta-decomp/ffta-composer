@@ -18,14 +18,52 @@ The browser bridge on the editor's own page exposes:
 - `await open(bytes, fileName)`
 - `getCatalog({ includePrograms, includeDialogue })`
 - `getStory(sceneId, variantIndex = 0)` → ordered story steps, resolved dialogue, and known branch offsets
-- `getProject()`
-- `preview(project, 'merge' | 'replace')`
-- `apply(project, 'merge' | 'replace')`
+- `getProject()` → project object
+- `exportProject('json' | 'lua')` → complete project text
+- `preview(projectOrText, 'merge' | 'replace')`
+- `apply(projectOrText, 'merge' | 'replace')`
 - `exportRom()` → `Uint8Array`
 
 Merge replaces entries by resource key. Replace uses the supplied project
 as the complete edit set. Both validate the result before changing editor
 state. The editor never evaluates code from a project document.
+
+## Project source formats
+
+A project can be saved and loaded as JSON or Lua. Both forms reach the same
+ROM-profile and project validation before compilation. The Lua importer reads
+one returned data table using a static parser. The parser accepts named tables,
+ordered arrays, strings, numbers, booleans, comments and the constructors
+below. Arbitrary function calls, assignments, loops and file access are outside
+this authoring language.
+
+| Lua expression | Project data |
+| --- | --- |
+| `say(text)`, `sayAs(actor, text)` or `say(text, actor)` | Dialogue step with an optional native speaker binding |
+| `when(flag, yes, no)` | Native flag branch. The last argument is optional. |
+| `op(name, operands)` | Named native instruction |
+| `native(opcode, bytes)` | Preserved instruction and its opaque bytes |
+| `glyph(code, width)`, `control(code, args, side)`, `separator()` | Dialogue tokens. The side is optional. |
+| `list()`, `{}`, `null` | Empty array, empty object, and JSON null |
+
+Use list-style tables for nonempty arrays and keyed tables for maps. Keys such
+as `["63:2"]` retain the original resource references. Short quoted strings
+support escapes such as `\n`, `\t` and `\u{e9}`. Lua long strings and long
+comments can span multiple lines. Every constructor has a table form, so
+documents can represent every field and value of the project schema.
+
+The [JSON sample](../examples/herb-arrival.json) and
+[Lua sample](../examples/herb-arrival.lua) compile to the same ROM bytes.
+
+```sh
+node tools/scene.mjs convert examples/herb-arrival.json lua
+node tools/scene.mjs diff /path/to/retail.gba examples/herb-arrival.lua
+node tools/scene.mjs build /path/to/retail.gba examples/herb-arrival.lua /path/to/story.gba
+```
+
+`convert` changes the source representation. `diff` and `build` validate the
+project against the supplied ROM. The GBA executes the emitted native
+instructions.
 
 ## Project example
 
