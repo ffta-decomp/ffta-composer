@@ -1,6 +1,6 @@
-# FFTA Scene Editor
+# FFTA Composer
 
-[Open the editor on GitHub Pages](https://ffta-decomp.github.io/ffta-scene-editor/)
+[Open the editor on GitHub Pages](https://ffta-decomp.github.io/ffta-composer/)
 
 Edit scenes and dialogue for Final Fantasy Tactics Advance (USA) in a browser.
 The editor reads a ROM selected on your device, saves declarative project JSON,
@@ -45,7 +45,7 @@ node tools/scene.mjs inspect /path/to/input.gba
 FFTA_US_ROM=/path/to/retail.gba npm test
 ```
 
-Open `dist/ffta-scene-editor.html` to use the offline build. The repository's
+Open `dist/ffta-composer.html` to use the offline build. The repository's
 Pages workflow builds the same file at `_site/index.html`.
 
 See [module integration](docs/modules.md), [Agent integration](docs/agent.md),

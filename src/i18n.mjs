@@ -44,7 +44,6 @@ const english = {
   '战斗开场对白': 'Battle introduction',
   '编辑第一幕': 'Edit opening',
   '标题': 'Title',
-  'FFTA 剧情编辑器': 'FFTA Scene Editor',
   '未载入 ROM': 'No ROM open',
   '打开 ROM': 'Open ROM',
   '导入项目': 'Import project',

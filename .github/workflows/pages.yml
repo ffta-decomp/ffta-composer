@@ -1,4 +1,4 @@
-name: Build and deploy the scene editor
+name: Build and deploy FFTA Composer
 
 on:
   pull_request:

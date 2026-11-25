@@ -29,7 +29,7 @@ const html = (await read(new URL('index.html', root)))
   .replace('<link rel="stylesheet" href="./style.css">', `<style>\n${await read(new URL('style.css', root))}\n</style>`)
   .replace('<script type="module" src="./src/app.mjs"></script>',
     `<script type="importmap">${JSON.stringify({ imports: map })}</script>\n<script type="module">import "${entry}";</script>`);
-const output = process.argv[2] ? resolve(process.argv[2]) : fileURLToPath(new URL('dist/ffta-scene-editor.html', root));
+const output = process.argv[2] ? resolve(process.argv[2]) : fileURLToPath(new URL('dist/ffta-composer.html', root));
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, html);
 console.log(output);
