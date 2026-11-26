@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ffta:character-table:v1",
+  "title": "Normalized FFTA character table",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "name",
+    "entries"
+  ],
+  "properties": {
+    "format": {
+      "const": "ffta.character-table/v1"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "width",
+          "index",
+          "text"
+        ],
+        "properties": {
+          "width": {
+            "enum": [
+              "full",
+              "half"
+            ]
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3174
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "preferred": {
+            "type": "boolean"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "width": {
+                  "const": "half"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "index": {
+                  "maximum": 255
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

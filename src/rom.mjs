@@ -1,9 +1,10 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
-import { PROFILE, OPERATIONS, US_LAYOUT_SIGNATURES } from './profile.mjs';
+import { PROFILE, OPERATIONS, US_LAYOUT_SIGNATURES, US_CN_ENGINE_SIGNATURE } from './profile.mjs';
 import { VM_INSTRUCTIONS } from './vm-instructions.mjs';
 import { check, digest, hex, u16, u32 } from './binary.mjs';
-import { readLine } from './text.mjs';
+import { readLine, preview } from './text.mjs';
+import { normalizeCharacterTable } from './character-table.mjs';
 
 export const programKey = (group, program) => `${group}/${program}`;
 export const pageKey = (page, variant = null) => variant === null ? String(page) : `${page}/${variant}`;
@@ -88,26 +89,39 @@ export function readPrograms(bytes, specs) {
   return { programs: result, directories };
 }
 
-function readPages(bytes) {
+function readPages(bytes, chinese = false) {
   const { start, pages, nested, variants, end } = PROFILE.dialogue;
   const outer = Array.from({ length: pages }, (_, i) => start + u32(bytes, start + i * 4));
   const children = Array.from({ length: variants }, (_, i) => start + u32(bytes, outer[nested] + i * 4));
-  const limits = [...new Set([...outer, ...children, end])].sort((a, b) => a - b);
+  const limits = [...new Set([...outer, ...children, chinese ? bytes.length : end])].sort((a, b) => a - b);
   const unique = new Map();
   const result = new Map();
   function add(page, variant, offset) {
     if (!unique.has(offset)) {
       const limit = limits[limits.indexOf(offset) + 1];
-      check(offset >= start + pages * 4 && limit <= end, 'Invalid dialogue page pointer');
+      check(offset >= start + pages * 4 && limit <= (chinese ? bytes.length : end), 'Invalid dialogue page pointer');
       const directory = u16(bytes, offset);
-      const count = directory / 2 - 1;
-      check(Number.isInteger(count) && count > 0 && count < 4096 && offset + directory < limit &&
-        u16(bytes, offset + directory - 2) === 65535, 'Invalid dialogue directory');
+      check(directory % 2===0 && directory>=4 && directory<8192 && offset+directory<limit, 'Invalid dialogue directory');
+      const slots=Array.from({length:directory/2},(_,i)=>u16(bytes,offset+i*2));
+      const count=chinese ? slots.indexOf(65535) : slots.length-1;
+      check(count>0 && slots[count]===65535, 'Invalid dialogue directory');
       const records = Array.from({ length: count }, (_, i) => {
         const first = offset + u16(bytes, offset + i * 2);
         const last = i + 1 === count ? limit : offset + u16(bytes, offset + (i + 1) * 2);
         check(first >= offset + directory && first < last && last <= limit, 'Invalid dialogue record bounds');
-        return { index: i, start: first, end: last, ...readLine(bytes, first, last) };
+        let record;
+        try { record=readLine(bytes,first,last); }
+        catch(error) {
+          if(!chinese)throw new Error(`Dialogue ${pageKey(page,variant)}:${i}: ${error.message}`);
+          // The supplied CN archive contains undecodable source placeholders.
+          // Keep their bounded bytes opaque; never invent an empty text record.
+          check(first+4<=last,'Truncated opaque dialogue storage');
+          check(bytes[first]===0 && bytes[first+1]===0 && bytes[first+2]===255 && bytes[first+3]===255,
+            `Dialogue ${pageKey(page,variant)}:${i}: ${error.message}`);
+          record={flags:u16(bytes,first),encoding:bytes[first]&1?'alternate':'standard',
+            tokens:[],preview:'⟨unparsed⟩',opaque:true,decodeError:error.message,storedLength:4};
+        }
+        return { index: i, start: first, end: chinese && i+1===count ? first+record.storedLength : last, ...record };
       });
       unique.set(offset, records);
     }
@@ -132,11 +146,14 @@ export async function openUSRom(input) {
   const bytes = Uint8Array.from(input);
   const sha256 = await digest(bytes);
   const retail = sha256 === PROFILE.sha256;
+  let chinese = false;
   if (!retail) {
     const gameCode = String.fromCharCode(...bytes.subarray(0xac, 0xb0));
     check(gameCode === PROFILE.gameCode && bytes[0xbc] === 0, 'This game or ROM revision needs its own profile');
     for (const [start, end, expected] of US_LAYOUT_SIGNATURES) {
-      check(await digest(bytes.subarray(start, end)) === expected,
+      const actual=await digest(bytes.subarray(start,end));
+      if(start===0xc0&&actual===US_CN_ENGINE_SIGNATURE)chinese=true;
+      check(actual === expected || (start===0xc0&&chinese),
         'This ROM changes the US engine or scene instruction table and needs its own profile');
     }
   }
@@ -145,7 +162,7 @@ export async function openUSRom(input) {
   }
   const specs = opcodeSpecs(bytes);
   const { programs, directories } = readPrograms(bytes, specs);
-  const { pages, outer, children } = readPages(bytes);
+  const { pages, outer, children } = readPages(bytes, chinese);
   const scenes = Array.from({ length: PROFILE.index.count }, (_, id) => {
     const at = PROFILE.index.start + id * 4;
     const [oneBasedGroup, program, dialoguePage, reserved] = bytes.subarray(at, at + 4);
@@ -155,7 +172,17 @@ export async function openUSRom(input) {
     return { id, status, script, dialoguePage, reserved };
   });
   check(programs.size === 228 && pages.size === 88, 'Unexpected retail scene archive topology');
-  return { bytes, profile: retail ? PROFILE.id : PROFILE.compatibleId, sha256, scenes, specs, programs, directories, pages, outer, children };
+  return { bytes, profile: retail ? PROFILE.id : chinese ? PROFILE.chineseId : PROFILE.compatibleId, sha256, scenes, specs, programs, directories, pages, outer, children };
+}
+
+/** Re-label tokens immutably; byte parsing and engine compatibility stay separate. */
+export function withCharacterTable(rom, value) {
+  const characterTable=normalizeCharacterTable(value);
+  if(characterTable===rom.characterTable || (!characterTable&&!rom.characterTable))return rom;
+  const nativePages=rom.nativePages ?? rom.pages;
+  const pages=new Map([...nativePages].map(([key,page])=>[key,{...page,
+    records:page.records.map(record=>({...record,preview:record.opaque?record.preview:preview(record.tokens,false,characterTable)}))}]));
+  return {...rom,nativePages,pages,characterTable};
 }
 
 export function catalog(rom, { includePrograms = false, includeDialogue = false } = {}) {
@@ -173,7 +200,8 @@ export function catalog(rom, { includePrograms = false, includeDialogue = false 
     vmInstructions: VM_INSTRUCTIONS,
     pages: [...rom.pages.values()].map(({ key, page, variant, records }) => ({
       key, page, variant, lineCount: records.length,
-      ...(includeDialogue ? { lines: records.map(({ index, flags, encoding, tokens, preview }) => ({ index, flags, encoding, tokens, preview })) } : {}),
+      ...(includeDialogue ? { lines: records.map(({ index, flags, encoding, tokens, preview, opaque, decodeError }) =>
+        ({ index, flags, encoding, tokens, preview, ...(opaque?{opaque,decodeError}:{})})) } : {}),
     })),
     ...(includePrograms ? { programs: [...rom.programs.values()].map(({ group, program, commands }) => ({ group, program, commands })) } : {}),
   };

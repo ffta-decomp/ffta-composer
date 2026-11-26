@@ -3,7 +3,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { check } from '../src/binary.mjs';
-import { catalog } from '../src/rom.mjs';
+import { catalog, withCharacterTable } from '../src/rom.mjs';
+import { parseCharacterTable } from '../src/character-table.mjs';
 import { describeStory } from '../src/story.mjs';
 import { buildBattleListenerProbe, buildBattleVictoryProbe } from '../src/battle-probes.mjs';
 import { formatProjectText, parseProjectText } from '../src/project-text.mjs';
@@ -19,6 +20,14 @@ const json = document => JSON.stringify(document, null, 2) + '\n';
 const readProject = async path => parseProjectText(await readFile(path, 'utf8'));
 
 async function main() {
+  const tableAt=args.indexOf('--character-table');
+  let characterTable;
+  if(tableAt>=0) {
+    check(['catalog','story','project','diff','build'].includes(command),'Character tables apply to catalog, story, project, diff or build');
+    check(args[tableAt+1] && args.lastIndexOf('--character-table')===tableAt,'Expected one --character-table FILE option');
+    characterTable=parseCharacterTable(await readFile(args[tableAt+1],'utf8'),args[tableAt+1].split('/').at(-1));
+    args.splice(tableAt,2);
+  }
   check(input && ['inspect', 'catalog', 'story', 'project', 'diff', 'build', 'battle-probe', 'convert'].includes(command),
     'Usage: scene inspect ROM | catalog ROM [--programs] [--dialogue] | story ROM SCENE [PROJECT] [VARIANT] | project ROM [--lua] | diff ROM PROJECT | build ROM PROJECT OUTPUT | battle-probe ROM OUTPUT [--victory] | convert PROJECT json|lua');
   if (command === 'convert') {
@@ -34,7 +43,8 @@ async function main() {
     process.stdout.write(json(await inspectRom(romInput)));
     return;
   }
-  const { rom, project } = await openRom(romInput);
+  let { rom, project } = await openRom(romInput);
+  if(characterTable){project=importProject(rom,project,{...project,characterTable});rom=withCharacterTable(rom,characterTable);}
   if (command === 'battle-probe') {
     check(args.length === 1 || (args.length === 2 && args[1] === '--victory'), 'Expected an output ROM path and optional --victory');
     const compiler = args[1] ? buildBattleVictoryProbe : buildBattleListenerProbe;

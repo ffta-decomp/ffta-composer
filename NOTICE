@@ -18,3 +18,15 @@ removing attribution or falsely claiming independent authorship is prohibited.
 Third-party material retains its own copyright and license notices.
 This software's license grants no rights to Nintendo/Square Enix ROMs, SAVs,
 characters, music, or other game assets supplied separately by users.
+
+Built-in US Chinese v1.1 character mapping:
+The token-to-Unicode labels in src/character-tables/us-cn-v1.1.mjs are derived
+from the owner-supplied third-party workbook 美版汉化字符表.xlsx, through the
+reviewed ffta-us-cn character-table.json. The owner requested their inclusion
+as a selectable Composer preset. Only indices, labels, nulls and aliases are
+included; no ROM contents, font pixels, translated game dialogue or workbook
+file is included. This provenance notice does not assign a license to the
+third-party mapping or remove any existing rights or attribution.
+Workbook SHA-256: 473dd8d2bb43c17aab292a51e00fa5154b97bc5610d53cded1cb737d6d02e17e
+Source mapping SHA-256: 635686a3b23aa786ff6ab0e289e1bd2fe875d31252ba556ebd9095ea5ee342cf
+See docs/character-tables.md for format, source and generation details.
