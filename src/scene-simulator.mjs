@@ -1,12 +1,12 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — see LICENSE and NOTICE for reuse and attribution.
-import { check, integer } from './binary.mjs';
+import { check, integer,u16,u32 } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { DIRECTIONS, OPENING_CAST } from './opening.mjs';
 import { plan } from './project.mjs';
 import { decodeInstructions, pageKey, programKey, withCharacterTable } from './rom.mjs';
 import { toVmExpression } from './vm-instructions.mjs';
-import { preview as previewText } from './text.mjs';
+import { preview as previewText,readLine } from './text.mjs';
 import {describeSceneActor} from './scene-actors.mjs';
 import {newSimulationRuntime,simulateRuntimeInstruction,SIMULATION_INSTRUCTIONS,selectSimulationEncounter,populateSimulationUnits} from './simulation-runtime.mjs';
 export {SIMULATION_INSTRUCTIONS} from './simulation-runtime.mjs';
@@ -129,13 +129,34 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   state.queue = sequence.slice(0, 8).map(({type, text, path}) => ({type, text, path}));
 
   function speak(text, handle, path) {
-    const info=actorInfo(handle);
+    const info=handle===null?{kind:'system',name:'Prompt',handle:null}:actorInfo(handle);
     state.dialogue = {text, speaker:info.label, speakerInfo:info,
       actorId:state.actors.some(a=>a.id===handle) ? handle : null,path};
     state.choice = null; state.phase = 'dialogue';
   }
+  function presentLine(line,handle,path) {
+    const menuAt=line.tokens?.findIndex(token=>token.kind==='control'&&token.code===0x32)??-1;
+    if(menuAt<0){speak(runtimeText(line),handle,path);return;}
+    const groups=[[]];
+    for(const token of line.tokens.slice(menuAt+1)){
+      if(token.kind==='separator')groups.push([]);else groups.at(-1).push(token);
+    }
+    state.choice={prompt:previewText(line.tokens.slice(0,menuAt),false,rom.characterTable).trimEnd(),
+      labels:[previewText(groups[0],false,rom.characterTable),previewText(groups[1]??[],false,rom.characterTable)],
+      speakerInfo:handle===null?{kind:'system',name:'Prompt',handle:null}:actorInfo(handle),path,native:true};
+    state.dialogue=null;state.phase='choice';
+  }
+  function managedPrompt(value,path) {
+    const mode=value&128?1:2,index=value&127,b=rom.bytes,bank=u32(b,0x36d678+mode*4)-0x08000000;
+    check(bank>=0&&bank+2<=b.length,'Invalid prompt bank');
+    const directory=u16(b,bank);check(directory>=4&&directory%2===0&&directory<8192&&index<directory/2,'Invalid prompt index');
+    const relative=u16(b,bank+index*2);check(relative>=directory&&relative!==65535,'Invalid prompt record');
+    const next=u16(b,bank+(index+1)*2),end=next>relative&&next!==65535?bank+next:Math.min(b.length,bank+65535);
+    check(bank+relative<end&&end<=b.length,'Invalid prompt bounds');
+    presentLine(readLine(b,bank+relative,end,rom.characterTable),null,path);
+  }
   function runtimeText(line) {
-    if(!line.tokens?.length)return line.text;
+    if(!line.tokens?.length)return line.text??line.preview??'';
     // Opening text 04/0 is the entered primary name; 51 uses named text slots.
     // Preserve other controls/variables rather than assigning invented values.
     return line.tokens.map(token=>{
@@ -261,19 +282,9 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     else if (name === 'showDialogue') {
       const line = lines.get(p.textSelector);
       if (!line) {block('missing-dialogue'); return;}
-      const menuAt = line.tokens?.findIndex(token => token.kind === 'control' && token.code === 0x32) ?? -1;
-      if (menuAt >= 0) {
-        const groups = [[]];
-        for (const token of line.tokens.slice(menuAt + 1)) {
-          if (token.kind === 'separator') groups.push([]);
-          else groups.at(-1).push(token);
-        }
-        state.choice = {prompt:previewText(line.tokens.slice(0,menuAt),false,rom.characterTable).trimEnd(),
-          labels:[previewText(groups[0],false,rom.characterTable),previewText(groups[1] ?? [],false,rom.characterTable)],
-          speakerInfo:describeSceneActor(p.speakerHandle,sceneId),path:`native.${offset}`, native:true};
-        state.phase = 'choice'; state.dialogue = null;
-      } else speak(runtimeText(line), p.speakerHandle, `native.${offset}`);
-    } else if (name === 'placeSceneActor') Object.assign(actor(p.actor), {x:p.tile & 15, y:p.tile >>> 4, facing:p.facing, visible:Boolean(p.visibility&15)});
+      presentLine(line,p.speakerHandle,`native.${offset}`);
+    } else if(name==='showScenePrompt')managedPrompt(p.mode,`native.${offset}`);
+    else if (name === 'placeSceneActor') Object.assign(actor(p.actor), {x:p.tile & 15, y:p.tile >>> 4, facing:p.facing, visible:Boolean(p.visibility&15)});
     else if (name === 'placeScenePackedActor') Object.assign(actor(p.type), {x:p.packedXY & 15, y:p.packedXY >>> 4, facing:p.arg, visible:true});
     else if (name === 'setActorFacing') actor(p.actor).facing = p.facing;
     else if (name === 'setActorTile') {

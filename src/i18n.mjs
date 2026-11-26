@@ -1,6 +1,18 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '新游戏：雪球战':'New game: Snowball','正在进入第一幕':'Entering the first act',
+  '游戏尚未生成存档':'The game has not created save data yet',
+  '原版试玩':'Native play','指令预览':'Instruction preview','尚未启动原版游戏':'Native game has not started',
+  '原版游戏画面':'Native game stage','GBA 游戏画面':'GBA framebuffer',
+  '继续试玩':'Resume game','启动原版游戏':'Start native game','正在启动 WASM 游戏核心':'Starting WASM game core',
+  '单帧':'Frame step','游戏速度':'Game speed','静音':'Mute','导出游戏存档':'Export game save','载入游戏存档':'Load game save',
+  '请选择 64 或 128 KiB 的 GBA 存档':'Choose a 64 or 128 KiB GBA save',
+  '存档已载入，启动游戏后读取':'Save loaded. Start the game to use it',
+  '原版游戏由 WASM 执行，包含完整战斗。方向键移动；X/A 确认，Z/B 取消，Enter 开始，Shift 选择。':'WASM runs the original game, including combat. Arrow keys move; X/A confirms, Z/B cancels, Enter starts, Shift selects.',
+  'ROM 和存档只在本机处理；可导出本次游戏的 SAV。':'ROM and save data stay on this device. Export your game progress as a SAV file.',
+  '原版游戏运行中':'Native game running','原版游戏已暂停':'Native game paused',
+  '提示':'Prompt',
   '角色高度移动':'Actor height movement','载入登场角色':'Load scene cast','选择场景配置':'Select scene setup',
   '沿路径移动':'Follow path','沿坐标路径移动':'Follow coordinate path','场景流程':'Scene flow','角色命名':'Character naming',
   '角色动作':'Actor action','输入姓名':'Name entry','角色姓名':'Character name','输入角色姓名':'Enter character name','确认姓名':'Confirm name',

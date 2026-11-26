@@ -5,7 +5,7 @@ import {VM_INSTRUCTIONS} from './vm-instructions.mjs';
 
 // These sets are deliberately explicit. Recognition is not native equivalence.
 const core=new Set([0,1,2,3,4,5,6,11,12,13,15,21,22,23,25,26,28,31,32,40,41,47,58,62,70,71,72,75,77,78,83,101,107,113,59,60]);
-const modeled=new Set([7,8,9,14,16,24,27,29,35,36,37,39,42,43,45,46,48,49,50,51,55,56,57,61,63,64,65,66,67,68,69,73,74,76,79,81,82,84,87,88,89,90,91,93,97,99,100,102,103,104,105,106,108,109,110,111,112]);
+const modeled=new Set([7,8,9,14,16,18,24,27,29,35,36,37,38,39,42,43,45,46,48,49,50,51,55,56,57,61,63,64,65,66,67,68,69,73,74,76,79,81,82,84,87,88,89,90,91,93,97,99,100,102,103,104,105,106,108,109,110,111,112]);
 export const SIMULATION_INSTRUCTIONS=Object.freeze(VM_INSTRUCTIONS.map(d=>Object.freeze({
   opcode:d.opcode,operation:d.name,handling:core.has(d.opcode)?'core':modeled.has(d.opcode)?'model':'external',
   description:d.description,
@@ -73,6 +73,11 @@ export function simulateRuntimeInstruction({rom,state,actor,move,branch,external
     case 35:a().flags=(a().flags??0)&~1;a().visible=true;break;
     case 36:a().flags=(a().flags??0)|1;a().visible=false;break;
     case 37:a().facing=p.direction&3;a().action={kind:'turn',mode:p.mode};delay(1000/60);break;
+    case 38:{const source=state.actors.find(a=>a.id===p.firstHandle),target=state.actors.find(a=>a.id===p.secondHandle);
+      if(!source||!target){external('actor-context',p);break;}
+      const dx=target.x-source.x,dy=target.y-source.y;
+      source.facing=dx===0?(dy>0?0:2):dy===0?(dx>0?3:1):Math.abs(dy)>Math.abs(dx)?(dy>0?0:2):(dx>0?3:1);
+      source.action={kind:'face-actor',target:p.secondHandle};delay(6*1000/60);break;}
     case 39:a().action={kind:'action',id:p.action,mode:p.mode};event('actor-action',p);break;
     case 42:{const u=unit(p.actor);if(!u||u.maxHp===undefined||u.maxMp===undefined){external('unit-context',p);break;}
       Object.assign(u,{hp:u.maxHp,mp:u.maxMp,statuses:{}});a().flags=0;break;}

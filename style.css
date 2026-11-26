@@ -535,6 +535,12 @@ dialog::backdrop { background: #101f17ac; }
 .simulation-name-entry { position:absolute; left:8%; right:8%; bottom:6%; padding:18px; background:#f5edc8; border:2px solid #5c6945; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 .simulation-name-entry[hidden] { display:none; }
 .simulation-name-error { color:#9a302b; flex-basis:100%; }
+.native-game-stage { background:#111; border-radius:8px; overflow:hidden; max-width:900px; outline-offset:4px; }
+.native-game-stage canvas { display:block; width:100%; height:auto; aspect-ratio:3/2; image-rendering:pixelated; }
+.native-game-controls { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
+.native-game-controls button { min-width:46px; min-height:42px; touch-action:none; user-select:none; }
+.native-game-credit { display:block; color:var(--muted); margin-top:12px; }
+#build-version { font-size:10px; opacity:.55; font-weight:400; margin-left:8px; }
 .simulation-message { position:absolute; top:12px; left:12px; right:12px; padding:10px 13px; background:#f5edc8ed; border-radius:5px; font-size:.87rem; }
 .simulation-flow { padding-left:15px; border-left:1px solid var(--line); min-width:0; }
 .simulation-flow h2 { margin:0 0 12px; font-size:1rem; }

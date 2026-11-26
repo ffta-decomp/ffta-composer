@@ -2,8 +2,8 @@
   "format": "ffta.simulation-instructions/v1",
   "counts": {
     "core": 36,
-    "model": 57,
-    "external": 21
+    "model": 59,
+    "external": 19
   },
   "instructions": [
     {
@@ -117,7 +117,7 @@
     {
       "opcode": 18,
       "operation": "showScenePrompt",
-      "handling": "external",
+      "handling": "model",
       "description": "If b1 has its high bit set, use mode 1 and b1-128; otherwise use mode 2 and b1. Start the 08125fa8 prompt/dialogue task, not a generic scene-mode bit write."
     },
     {
@@ -237,8 +237,8 @@
     {
       "opcode": 38,
       "operation": "createActionFromHandles",
-      "handling": "external",
-      "description": "Create a two-actor action through 08126e34 with owner, first, second, first. Its exact action/following modes remain unresolved."
+      "handling": "model",
+      "description": "Request that firstHandle face secondHandle through 08126e34 and DetermineSceneFacing at 08124acc. A separate direction-transition task signals completion; the historical expression name is retained."
     },
     {
       "opcode": 39,

@@ -40,7 +40,8 @@ The browser bridge on the editor's own page exposes:
 - `getCharacterTable()` → normalized project mapping or `null`
 - `getCharacterTablePresets()` → available preset IDs/names
 - `selectCharacterTable("us-retail" | "us-cn-v1.1")` → select and validate a built-in mapping
-- `getSimulation()` → a cloned preview snapshot while the Simulation tab is active,
+- `getSimulation()` → native WASM core/frame/scene/input status after starting Native play.
+- `getScriptPreview()` → a cloned semantic preview snapshot while Instruction preview is active,
   otherwise `null`; see [simulation semantics and limitations](simulation.md)
 - `exportProject('json' | 'lua')` → complete project text
 - `preview(projectOrText, 'merge' | 'replace')`
