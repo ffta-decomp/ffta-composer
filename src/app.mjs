@@ -18,6 +18,7 @@ import { $, button, dialog, download, downloadJson, el, field, handle, notice, n
 import { createBattleEventPanel } from './ui/battle-event.mjs';
 import { createCutscenePanel } from './ui/cutscene.mjs';
 import { createSimulatorPanel } from './ui/simulator.mjs';
+import {createNativeGamePanel} from './ui/native-game.mjs';
 import { createPanelRegistry } from './ui/panels.mjs';
 import { createInspector } from './ui/inspector.mjs';
 import { bindMenus } from './ui/menus.mjs';
@@ -861,7 +862,8 @@ $('#redo').onclick = () => {
 };
 const panels = createPanelRegistry([
   { id: 'story', label: '剧情', render: renderStory },
-  createSimulatorPanel({getRom: () => state.rom, getProject: () => state.project}),
+  createNativeGamePanel({getRom:()=>state.rom,getProject:()=>state.project}),
+  {...createSimulatorPanel({getRom: () => state.rom, getProject: () => state.project}),id:'script-preview',label:'指令预览',secondary:true},
   { ...createCutscenePanel({ getProject: () => state.project, editCollection, inspector }), retailOnly: true, secondary: true },
   { id: 'index', label: '场景关联', render: renderIndex, secondary: true },
   { id: 'dialogue', label: '对白', render: renderDialogue },
@@ -932,6 +934,7 @@ window.fftaSceneEditor = Object.freeze({
   getCharacterTablePresets() { return structuredClone(CHARACTER_TABLE_PRESETS); },
   selectCharacterTable(id) { return structuredClone(selectCharacterTable(id)); },
   getSimulation() { return panels.get('simulation').getSnapshot(); },
+  getScriptPreview() {return panels.get('script-preview').getSnapshot();},
   exportProject(format = 'json') {
     check(state.rom, 'Open a ROM first');
     return formatProjectText(state.project, format);

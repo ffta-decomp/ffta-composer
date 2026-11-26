@@ -1,4 +1,8 @@
 FFTA Composer
+Native game playback uses mGBA 0.10.5 by Jeffrey Pfau and contributors (MPL-2.0),
+blip_buf by Shay Green (LGPL-2.1-or-later), and inih by Ben Hoyt (BSD-3-Clause).
+Emscripten 4.0.10 provides the generated WASM runtime. Source, attribution,
+rebuild instructions, and complete license notices are in third-party/mgba/.
 Copyright (C) 2026 hitsmaxft
 Source: https://github.com/ffta-decomp/ffta-composer
 License: GNU General Public License version 3 only (GPL-3.0-only).

@@ -1,5 +1,8 @@
 # Scene simulation design
 
+This document describes **Instruction preview**, the semantic JS analysis tool.
+For complete game execution, animations and combat, use [Native play](native-play.md).
+
 Status: implemented on `scene-simulator`; excluded from the documentation/VM-expression CR #1.
 
 ## Outcome

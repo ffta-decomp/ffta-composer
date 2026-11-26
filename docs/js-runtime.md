@@ -6,7 +6,7 @@ modules, external assets, or ROM changes are required by the runtime.
 
 The [instruction matrix](simulation-instructions.json) enumerates every opcode,
 its native description, and current handling category. There are 36 core entries,
-57 additional model entries, and 21 external-service entries. A model entry may
+59 additional model entries, and 19 external-service entries. A model entry may
 still request context for an operand or mode it cannot faithfully evaluate.
 Classification does not mean complete original-engine behavior.
 

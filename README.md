@@ -13,11 +13,14 @@ ships one offline-capable HTML file and needs no game inputs for its build.
   repair, duplicate, or add scene entries.
 - **Cutscene** authors the opening cast, dialogue, movement, and facing.
   Goblin Patrol demonstrates the opening, encounter, victory, and continuation.
-- **Simulation** plays the current project with local ROM maps, static character
-  poses, dialogue speakers, camera movement, choices, and an execution trace. Pause, step, restart, and
-  speed controls are available. Playback stops before combat. See the
-  [simulation contract and limitations](docs/simulation.md) and
-  [JavaScript runtime coverage](docs/js-runtime.md).
+- **Native play** runs the current project's ROM in mGBA compiled to WebAssembly:
+  original graphics, character animation, camera, dialogue, audio, and combat.
+  **New game: Snowball** enters the first act through native Start/A input;
+  continue with the on-screen GBA buttons or keyboard. Pause, frame step, speed,
+  and local SAV import/export are available. See [native playback](docs/native-play.md).
+- **Instruction preview** remains a separate semantic JS tool for inspecting
+  script state and control flow. It does not replace native gameplay. See the
+  [preview limitations](docs/simulation.md) and [JS coverage](docs/js-runtime.md).
 - **Declarative story fragments** insert dialogue and flag-driven branches at an
   existing scene entry. Open the Herb Picking example in the story timeline
   by importing the [JSON](examples/herb-arrival.json) or [Lua](examples/herb-arrival.lua) project.
@@ -46,8 +49,8 @@ and evidence boundaries. Nested-choice fixture: [JSON](examples/herb-ward.json) 
 | Input | Available tools |
 | --- | --- |
 | Verified 16 MiB US retail, game code `AFXE` | All tools |
-| Reviewed US Chinese v1.1 engine/layout with an external character table | Scene index, dialogue, script editing, and semantic preview |
-| 16 MiB US data mod that passes the native engine and scene layout checks | Scene index, dialogue, and script editing |
+| Reviewed US Chinese v1.1 engine/layout with an external character table | Scene index, dialogue, script editing, native play, and instruction preview |
+| 16 MiB US data mod that passes the native engine and scene layout checks | Scene index, dialogue, script editing, and native play |
 | A ROM previously exported by this editor | Tools for its original input profile |
 | Engine hacks, relocated scene archives, or other game revisions | Identification and compatibility report |
 

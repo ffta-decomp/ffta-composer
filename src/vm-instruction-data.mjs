@@ -615,7 +615,7 @@ export const VM_INSTRUCTION_DATA = [
     "returns": [
       "115"
     ],
-    "description": "Create a two-actor action through 08126e34 with owner, first, second, first. Its exact action/following modes remain unresolved."
+    "description": "Request that firstHandle face secondHandle through 08126e34 and DetermineSceneFacing at 08124acc. A separate direction-transition task signals completion; the historical expression name is retained."
   },
   {
     "opcode": 39,

@@ -188,7 +188,7 @@ parameter combination was tested in gameplay.
 | `23` | 2 | `0x08122fe9` | 260 | actor:u8 | `100` | Clear bit 0 of the resolved actor object's flags through 08125760 and preserve other bits; yield until the next scheduling pass. |
 | `24` | 2 | `0x08122ffd` | 273 | actor:u8 | `100` | Set bit 0 of the resolved actor object's flags through 08125760 and preserve other bits; yield until the next scheduling pass. |
 | `25` | 4 | `0x08123011` | 886 | actor:u8, direction:u8, mode:u8 | `115` | Create a native asynchronous facing action through 08126dfc and callback 08126bfc, notifying the owner on completion. This differs from direct field write 29. |
-| `26` | 3 | `0x0812302d` | 148 | firstHandle:u8, secondHandle:u8 | `115` | Create a two-actor action through 08126e34 with owner, first, second, first. Its exact action/following modes remain unresolved. |
+| `26` | 3 | `0x0812302d` | 148 | firstHandle:u8, secondHandle:u8 | `115` | Request that firstHandle face secondHandle through 08126e34 and DetermineSceneFacing at 08124acc. A separate direction-transition task signals completion; the historical expression name is retained. |
 | `27` | 5 | `0x08123045` | 2156 | actor:u8, action:u16, mode:u8 | `115` | Create a unit action task through 08126ea4 and callback 08126d34. An action argument is not automatically a graphics-animation resource ID. |
 | `28` | 2 | `0x08123065` | 1605 | actor:u8 | `110` | Read the resolved actor's unit byte +f8 and reapply kind-1 state through 08124710. The opening uses this to refresh facing. |
 | `29` | 3 | `0x08123081` | 775 | actor:u8, facing:u8 | `110` | Write actor byte +1f directly. It does not independently refresh or wait; the opening pairs it with 28. |
@@ -363,7 +363,7 @@ Important disassembly corrections:
 Good candidates for further high-level modeling are label-based branches, native
 choice-result branches, u8/u16 frame waits, typed child-script parallel/join
 operations, path references, and action dictionaries. Outstanding work includes
-prompt contracts in 11/12/13, action modes in 0a/21/22/26/2c, the full meaning of
+prompt contracts in 11/12/13, action modes in 0a/21/22/2c, the full meaning of
 38, dedicated UI workflows in 50 and 5c–62, mission rewards/returns, and dynamic
 combat spawning. The typed expression layer below does not remove protections on
 the 83 previously opaque opcodes. New high-level action APIs still need model
