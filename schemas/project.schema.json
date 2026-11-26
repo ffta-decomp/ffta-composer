@@ -28,7 +28,8 @@
       "additionalProperties": false,
       "properties": {
         "storyChoices": {
-          "type": "boolean"
+          "const": false,
+          "description": "Reserved legacy option. Custom runtime instructions are currently disabled."
         }
       }
     },

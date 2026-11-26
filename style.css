@@ -512,3 +512,30 @@ dialog::backdrop { background: #101f17ac; }
   border-left: 2px solid #9f8b5f;
   color: var(--muted);
 }
+
+/* Local semantic preview; no game assets are distributed in this stylesheet. */
+.simulation-toolbar, .simulation-context { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.simulation-toolbar label, .simulation-context label { display:flex; align-items:center; gap:7px; margin:0; }
+.simulation-context select { max-width:200px; }
+.simulation-status { margin-left:auto; font-size:.83rem; color:var(--moss); }
+.simulation-layout { display:grid; grid-template-columns:minmax(0,1fr) 200px; gap:20px; }
+.simulation-stage { position:relative; align-self:start; overflow:hidden; background:linear-gradient(#71c7dc,#dce7cc); border:1px solid #b1a374; border-radius:9px; min-height:280px; outline-offset:3px; }
+.simulation-stage canvas { display:block; width:100%; max-height:540px; object-fit:contain; image-rendering:pixelated; }
+.simulation-dialogue { position:absolute; left:4%; right:4%; bottom:6%; padding:13px 18px; background:#f5edc8f5; border:2px solid #5c6945; border-radius:20px 7px; box-shadow:0 5px 0 #163d2a50; }
+.simulation-dialogue strong { color:#38503e; font-size:.86rem; }
+.simulation-dialogue p { margin:5px 0 0; white-space:pre-wrap; line-height:1.45; color:#263e33; }
+.simulation-choices { position:absolute; display:flex; gap:10px; left:8%; right:8%; bottom:2%; justify-content:center; }
+.simulation-choices:empty { display:none; }
+.simulation-message { position:absolute; top:12px; left:12px; right:12px; padding:10px 13px; background:#f5edc8ed; border-radius:5px; font-size:.87rem; }
+.simulation-flow { padding-left:15px; border-left:1px solid var(--line); min-width:0; }
+.simulation-flow h2 { margin:0 0 12px; font-size:1rem; }
+.simulation-flow h3 { margin:18px 0 8px; font-size:.82rem; color:var(--muted); }
+.simulation-flow ol { margin:0; padding-left:20px; font-size:.81rem; }
+.simulation-flow li { padding:3px 0; overflow-wrap:anywhere; }
+.simulation-flow li.current { color:#346145; font-weight:700; }
+.simulation-upcoming { opacity:.55; }
+.simulation-cast { display:flex; flex-wrap:wrap; gap:5px; }
+.simulation-cast span { font-size:.72rem; background:#e8dfbe; border-radius:3px; padding:3px 6px; }
+.simulation-note { color:var(--muted); font-size:.78rem; margin:10px 0 15px; }
+@media(max-width:760px) { .simulation-layout { grid-template-columns:1fr; } .simulation-flow { border-left:0; padding-left:0; } .simulation-status { margin-left:0; } .simulation-stage canvas { max-height:none; } }
+.simulation-stage:has(.simulation-choices:not(:empty)) .simulation-dialogue { bottom:70px; }

@@ -29,9 +29,10 @@ cancellation value 255, follows the sequential path. It does not automatically
 re-prompt. Combined with native `0x19`, it can implement a binary choice without
 adding machine code merely to read the result.
 
-The current high-level `choose` still uses optional patch opcode `0x72` for two
-route offsets and B-cancel re-prompting. `enemyHp` uses patch opcode `0x73` to
-assign current and maximum HP in 1–999. Native `0x2d` can clear HP/MP in a specific
+The current high-level `choose` uses native `0x71` and `0x19`; B cancellation
+follows the second route. Earlier custom `0x72`/`0x73` handlers remain in source
+but are disabled and never installed by the exporter. `enemyHp` is reserved and
+rejected. Native `0x2d` can clear HP/MP in a specific
 unit-state operation, `0x2a` restores current HP/MP from their maxima, and `0x6f`
 compares HP; none is a general arbitrary current/maximum HP setter.
 
@@ -279,7 +280,7 @@ parameter combination was tested in gameplay.
 | Capability | Native building blocks | Composer support and remaining work |
 | --- | --- | --- |
 | Sequential dialogue and pauses | 0f and text tokens, asynchronous completion | say, borrowed native speakers, token preservation; 11/12/13 prompt contracts remain incomplete |
-| Binary choices | Text token32, 71, 19 | Native result branching exists; high-level choose uses patch 72 for B re-prompting; 71 does not create larger menus |
+| Binary choices | Text token32, 71, 19 | High-level choose uses native 71 and 19; B follows the second route; 71 does not create larger menus |
 | Frame waits | 15/16 | Typed expressions exist; 15 has editable v1 support, 16 retains source-byte protection; no high-level fragment wait constructor |
 | Parallel performance and joining | 00/01 start, 03/04 wait, 02 end, 05 cancel | Runtime supports task-level parallelism; no high-level labels/parallel/join model yet |
 | Actor placement and recovery | 1f/20/33, 2a, 4e/4f | Native scene instantiation exists; dynamic combat registration still needs pool, occupancy, turns, and outcome validation |
@@ -318,10 +319,9 @@ joined: ...
 ```
 
 This uses only native instructions. Distinguishing B from the second choice is
-outside 71 itself; current patch 72 instead re-prompts. None of this establishes
-general per-key sampling. Existing choice replay validates the native producer
-and patch 72 path. It must not be misreported as direct gameplay coverage of the
-newly identified native opcode 71.
+outside 71 itself. The current compiler intentionally preserves that native
+behavior. See [native choice regression](native-choice-regression.md) for direct
+mGBA coverage; older patch-72 evidence applies only to the disabled implementation.
 
 ### 4.3 HP and combat boundaries
 
@@ -438,7 +438,8 @@ in `vmInstructions`.
 `editing: "preserve-native-layout"` have reversible typed encodings, but still
 lower to opaque native records requiring a source, identical layout, and unchanged
 opaque bytes. Renaming `native` does not bypass these guards. Patch 72/73 are not
-part of the native 114; high-level choose/enemyHp keep their patch gating.
+part of the native 114 and are currently disabled. High-level choose uses native
+71/19; enemyHp is rejected.
 
 Regenerate reference files without reading a ROM:
 
@@ -451,8 +452,8 @@ descriptors, without reading or writing game assets.
 
 ## 7. Complete regression record: 2026-11-25
 
-- All 25 tests passed with the pinned US ROM, with no skips. Without ROM input,
-  11 passed and14 integration tests skipped as designed.
+- The initial documentation checkpoint passed 25 tests with the pinned US ROM.
+  The expanded suite now passes 36; ROM-dependent tests skip when no input is supplied.
 - All 114 descriptors and static program/scene references reproduced from a fresh
   scan. JSON/Lua equivalence, operand limits, missing/extra arguments, and invalid
   ranges are covered across every typed expression.
@@ -461,18 +462,21 @@ descriptors, without reading or writing game assets.
   preserve the input ROM.
 - Semantic aliases cannot bypass the 83 opaque operations' source/layout/byte
   guards. Existing 31 operations and old project representations remain compatible.
-- Nested-choice JSON/Lua outputs agree. Tests cover native descriptor preservation,
-  default-off/unused patch behavior, compatibility rejection, and exact reopen.
-- The final offline build passed and embeds full GPLv3/NOTICE text. The Herb
-  Picking export matches the earlier gameplay-tested ROM.
-- mGBA replayed all four routes and B cancellation:12/12,28/28,52/52,72/72 HP.
-  All 353 sampled frames match the handoff evidence.
+- Nested-choice JSON/Lua outputs agree. Current builds preserve the native
+  descriptors, reject enabling custom instructions, and reopen exactly.
+- The current pinned-ROM suite passes 36 tests with no skips and the offline
+  build passes. Direct mGBA native-71 evidence is recorded in
+  [native choice regression](native-choice-regression.md).
+- Historical patch-based HP and B re-prompt evidence is retained locally but
+  does not describe the current native-only compiler.
 
 “Complete” means the full project test suite, every descriptor, and every original
 program's representation/encoding regression. It does not mean all 114 handlers
-were exercised naturally. Native 71, parallel/path workflows, and dedicated mission
-operations primarily have static-analysis evidence here. No physical-device or
-full battle-settlement acceptance is claimed. ROM/SAV/replay assets remain local.
+were exercised naturally. Additional native flag, timing, parallel-task, cancellation,
+and display-layer checks are recorded in [runtime capabilities](runtime-capabilities.md).
+Path workflows and dedicated mission operations primarily have static-analysis
+evidence here. No physical-device or full battle
+settlement acceptance is claimed. ROM/SAV/replay assets remain local.
 
 ## 中文摘要
 

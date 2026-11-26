@@ -8,7 +8,7 @@ import { PROFILE } from '../src/profile.mjs';
 import { build, importProject, openRom, plan } from '../src/project.mjs';
 import { formatProjectText, parseProjectText } from '../src/project-text.mjs';
 import { programKey } from '../src/rom.mjs';
-import { READ_MENU_CHOICE, SET_ENCOUNTER_HP, STORY_VM_TABLE, storyRuntimeCode } from '../src/story-runtime.mjs';
+import { READ_MENU_CHOICE, SET_ENCOUNTER_HP, STORY_VM_TABLE, storyRuntimeCode, storyVmDescriptors } from '../src/story-runtime.mjs';
 import { readLine } from '../src/text.mjs';
 
 const readExample = async format => parseProjectText(await readFile(
@@ -23,7 +23,7 @@ test('nested choice fixtures preserve the complete JSON and Lua model', async ()
   assert.equal(schema.$defs.storyEdit.properties.enemies.additionalProperties.properties.slot.maximum, 3);
 });
 
-test('four compiled menu routes set HP and return to the original dialogue', { skip: !source }, async () => {
+test('native menu routes and cancellation rejoin without installing runtime code', { skip: !source }, async () => {
   const { rom, project: empty } = await openRom(await readFile(source));
   const project = importProject(rom, empty, await readExample('json'));
   const change = plan(rom, project);
@@ -37,10 +37,9 @@ test('four compiled menu routes set HP and return to the original dialogue', { s
 
   // Walk emitted control flow, not the authoring tree. This checks branch deltas,
   // dialogue resources and return addresses; it does not execute the Thumb code.
-  for (const [choices, expected] of [ [[0, 0], 12], [[0, 1], 28], [[1, 0], 52], [[1, 1], 72] ]) {
+  for (const [choices, expected] of [ [[0, 0], 'Scatter'], [[0, 1], 'Keep'], [[1, 0], 'Flank'], [[1, 1], 'Duel'], [[255,0], 'Flank'], [[0,255], 'Keep'], [[255,255], 'Duel'] ]) {
     let pc = anchor.offset;
     let menus = 0;
-    const writes = [];
     const spoken = [];
     for (let budget = 0; budget < 40 && pc !== anchor.offset + 4; budget++) {
       switch (bytes[pc]) {
@@ -52,42 +51,32 @@ test('four compiled menu routes set HP and return to the original dialogue', { s
           if (control) {
             assert.deepEqual(control.args, [0x10]);
             assert.equal(record.tokens.filter(token => token.kind === 'separator').length, 2);
-            assert.equal(bytes[pc + 4], READ_MENU_CHOICE);
+            assert.equal(bytes[pc + 4], 0x71);
           }
           pc += 4;
           break;
         }
-        case READ_MENU_CHOICE:
+        case 0x71:
           assert.ok(menus < choices.length);
-          pc += 5 + signed(pc + (choices[menus++] === 0 ? 1 : 3));
-          break;
-        case SET_ENCOUNTER_HP:
-          writes.push([bytes[pc + 1], u16(bytes, pc + 2)]);
-          pc += 4;
+          pc += 3 + (choices[menus++] === 0 ? signed(pc + 1) : 0);
           break;
         default: assert.fail(`Unexpected opcode ${bytes[pc]} at ${pc}`);
       }
     }
     assert.equal(pc, anchor.offset + 4, 'Every route must resume immediately after the original say');
     assert.equal(menus, 2);
-    assert.deepEqual(writes, [[0, expected]]);
-    assert.ok(spoken.some(text => text.includes(`${expected} HP`)));
+    assert.ok(spoken.some(text => text.startsWith(`${expected} `)));
     assert.equal(spoken.at(-1), rom.pages.get('3').records[5].preview);
   }
 
   const jsonBuild = build(rom, project);
   const luaProject = importProject(rom, empty, await readExample('lua'));
   assert.deepEqual(build(rom, luaProject).bytes, jsonBuild.bytes);
-  const runtime = jsonBuild.allocations.find(item => item.kind === 'storyRuntime');
-  const table = jsonBuild.allocations.find(item => item.kind === 'sceneVmDescriptors');
-  assert.deepEqual(jsonBuild.bytes.slice(runtime.offset, runtime.offset + runtime.length), storyRuntimeCode);
-  assert.equal(u32(jsonBuild.bytes, STORY_VM_TABLE.pointer), PROFILE.bus + table.offset);
-  assert.deepEqual(jsonBuild.bytes.slice(table.offset, table.offset + READ_MENU_CHOICE * 6),
-    rom.bytes.slice(STORY_VM_TABLE.start, STORY_VM_TABLE.start + READ_MENU_CHOICE * 6));
-  for (const [opcode, size, entry] of [[READ_MENU_CHOICE, 5, 0], [SET_ENCOUNTER_HP, 4, 0x30]]) {
-    assert.equal(u16(jsonBuild.bytes, table.offset + opcode * 6), size);
-    assert.equal(u32(jsonBuild.bytes, table.offset + opcode * 6 + 2), PROFILE.bus + runtime.offset + entry + 1);
-  }
+  assert.equal(change.storyRuntime, false);
+  assert.ok(!jsonBuild.allocations.some(item=>['storyRuntime','sceneVmDescriptors'].includes(item.kind)));
+  assert.equal(u32(jsonBuild.bytes, STORY_VM_TABLE.pointer), PROFILE.bus + STORY_VM_TABLE.start);
+  assert.deepEqual(jsonBuild.bytes.slice(STORY_VM_TABLE.start, STORY_VM_TABLE.start + 114 * 6),
+    rom.bytes.slice(STORY_VM_TABLE.start, STORY_VM_TABLE.start + 114 * 6));
   const restoredPrefix = jsonBuild.bytes.slice(0, PROFILE.size);
   for (const pointer of jsonBuild.pointers) restoredPrefix.set(rom.bytes.subarray(pointer.offset, pointer.offset + 4), pointer.offset);
   assert.deepEqual(restoredPrefix, rom.bytes);
@@ -97,48 +86,39 @@ test('four compiled menu routes set HP and return to the original dialogue', { s
   assert.deepEqual(reopened.rom.bytes, rom.bytes);
   assert.deepEqual(build(reopened.rom, reopened.project).bytes, jsonBuild.bytes);
   const damaged = jsonBuild.bytes.slice();
-  damaged[runtime.offset] ^= 1;
+  damaged[jsonBuild.allocations.find(item=>item.kind==='program')?.offset ?? jsonBuild.allocations[0].offset] ^= 1;
   await assert.rejects(openRom(damaged), /embedded project/);
 });
 
-test('interactive stories require opt-in and a verified encounter with valid bounds', { skip: !source }, async () => {
+test('custom runtime stays reserved while native choices need no patch', { skip: !source }, async () => {
   const { rom, project: empty } = await openRom(await readFile(source));
   const example = await readExample('json');
   const rejects = (mutate, pattern) => {
     const data = structuredClone(example);
     mutate(data, data.storyEdits['herb-ward']);
     assert.throws(() => importProject(rom, empty, data), pattern);
-    assert.deepEqual(empty.storyEdits, undefined, 'A failed import cannot mutate the current project');
+    assert.deepEqual(empty.storyEdits, undefined);
   };
-  rejects(data => delete data.patches, /Enable the Story Choices patch/);
-  rejects(data => { data.patches.storyChoices = false; }, /Enable the Story Choices patch/);
-  rejects(data => { data.patches.storyChoices = 1; }, /must be a boolean/);
-  rejects((data, story) => { story.enemies.captain.slot = 4; }, /not verified/);
-  rejects((data, story) => { story.steps = [{type: 'enemyHp', enemy: 'captain', hp: 0}]; }, /Encounter HP/);
-  rejects((data, story) => { story.steps = [{type: 'enemyHp', enemy: 'captain', hp: 1000}]; }, /Encounter HP/);
-  rejects((data, story) => { story.steps = [{type: 'enemyHp', enemy: 'absent', hp: 12}]; }, /Undeclared story enemy/);
-  rejects((data, story) => { story.steps[2].first.label = 'Too long a label'; }, /short line/);
-  rejects((data, story) => { story.steps[2].prompt = 'one\ntwo\nthree'; }, /fit above/);
-  rejects((data, story) => { story.steps[2].first.steps = []; }, /at least one step/);
-  rejects((data, story) => { delete story.enemies; story.trigger.scene = 15; story.trigger.beforeDialogue = 7; delete story.speakers; story.steps = [story.steps[2]]; }, /verified retail encounter/);
-
-  const unused = structuredClone(empty);
-  unused.patches = {storyChoices: true};
-  assert.deepEqual(build(rom, unused).bytes, rom.bytes);
-  const arrival = parseProjectText(await readFile(new URL('../examples/herb-arrival.json', import.meta.url), 'utf8'));
-  const native = importProject(rom, empty, arrival);
-  const withOption = structuredClone(native);
-  withOption.patches = {storyChoices: true};
-  for (const output of [build(rom, native), build(rom, withOption)]) {
-    assert.equal(u32(output.bytes, STORY_VM_TABLE.pointer), PROFILE.bus + STORY_VM_TABLE.start);
-    assert.ok(!output.allocations.some(item => ['storyRuntime', 'sceneVmDescriptors'].includes(item.kind)));
+  rejects(data=>{data.patches={storyChoices:true};}, /reserved.*disabled/);
+  rejects(data=>{data.patches={storyChoices:1};}, /must be a boolean/);
+  rejects((data,story)=>{story.steps=[{type:'enemyHp',enemy:'captain',hp:12}];}, /enemyHp is reserved/);
+  rejects((data,story)=>{story.steps[2].first.label='Too long a label';}, /short line/);
+  rejects((data,story)=>{story.steps[2].prompt='one\ntwo\nthree';}, /fit above/);
+  rejects((data,story)=>{story.steps[2].first.steps=[];}, /at least one step/);
+  const native=importProject(rom,empty,example);
+  const withOption=structuredClone(native);withOption.patches={storyChoices:false};
+  for(const output of[build(rom,native),build(rom,withOption)]){
+    assert.equal(u32(output.bytes,STORY_VM_TABLE.pointer),PROFILE.bus+STORY_VM_TABLE.start);
+    assert.ok(!output.allocations.some(item=>['storyRuntime','sceneVmDescriptors'].includes(item.kind)));
   }
-  assert.equal(plan(rom, native).storyRuntime, false);
-
-  const mod = rom.bytes.slice();
-  mod[0x400000] ^= 1;
-  const {rom: layout, project: base} = await openRom(mod);
-  const forMod = {...example, profile: layout.profile, baseSha256: layout.sha256};
-  assert.throws(() => importProject(layout, base, forMod), /not verified/);
-  assert.deepEqual(build(layout, {...base, patches: {storyChoices: true}}).bytes, mod);
+  const mod=rom.bytes.slice();mod[0x400000]^=1;
+  const{rom:layout,project:base}=await openRom(mod);
+  const forMod={...example,profile:layout.profile,baseSha256:layout.sha256};
+  const output=build(layout,importProject(layout,base,forMod));
+  assert.ok(!output.allocations.some(item=>['storyRuntime','sceneVmDescriptors'].includes(item.kind)));
+  // Retained extension reference is still coherent, but is never linked above.
+  const table=storyVmDescriptors(rom,0x09000000);
+  assert.equal(u16(table,READ_MENU_CHOICE*6),5);
+  assert.equal(u16(table,SET_ENCOUNTER_HP*6),4);
+  assert.equal(storyRuntimeCode.length,100);
 });

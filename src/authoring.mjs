@@ -3,7 +3,6 @@
 import { check, concat, integer, put16 } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { lineKey, programKey } from './rom.mjs';
-import { READ_MENU_CHOICE, SET_ENCOUNTER_HP } from './story-runtime.mjs';
 import { plainTokens } from './text.mjs';
 
 const SAY = 0x0f;
@@ -32,7 +31,7 @@ function sourceDialogue(commands, selector, occurrence) {
     command.operands.textSelector === selector)[occurrence - 1];
 }
 
-function compileBeats(recipe, addLine, anchor, commands, profile, enableChoices) {
+function compileBeats(recipe, addLine, anchor, commands, profile) {
   const bindings = recipe.flags === undefined ? {} : recipe.flags;
   for (const [name, id] of entries(bindings, 'flag bindings')) {
     symbol(name, 'flag name');
@@ -61,14 +60,6 @@ function compileBeats(recipe, addLine, anchor, commands, profile, enableChoices)
     enemies.set(name, binding.slot);
   }
 
-  let usesRuntime = false;
-  function requireRuntime() {
-    check(enableChoices, 'Enable the Story Choices patch to use interactive story instructions');
-    check(profile === PROFILE.id && encounterEnemies.has(recipe.trigger.scene),
-      'Interactive story instructions require a verified retail encounter');
-    usesRuntime = true;
-  }
-
   function say(text, speaker) {
     check(typeof text === 'string' && text.trim() && text.length <= 160,
       'Story dialogue must contain 1–160 characters');
@@ -95,7 +86,6 @@ function compileBeats(recipe, addLine, anchor, commands, profile, enableChoices)
         continue;
       }
       if (node?.type === 'choose') {
-        requireRuntime();
         fields(node, ['type', 'prompt', 'first', 'second'], [], 'choice step');
         check(typeof node.prompt === 'string' && node.prompt.trim() && node.prompt.length <= 48 &&
           node.prompt.split('\n').length <= 2, 'A choice prompt must fit above its options');
@@ -115,19 +105,15 @@ function compileBeats(recipe, addLine, anchor, commands, profile, enableChoices)
         const first = compile(node.first.steps, depth + 1);
         const second = compile(node.second.steps, depth + 1);
         check(first.length && second.length, 'Both choice routes need at least one step');
-        const opcode = Uint8Array.of(READ_MENU_CHOICE, 0, 0, 0, 0);
-        put16(opcode, 3, first.length + 3);
-        parts.push(prompt, opcode, first, jump(second.length), second);
+        // Native 0x71 branches only for result zero. Second choice and B
+        // cancellation fall through, matching the original VM contract.
+        const branch = Uint8Array.of(0x71, 0, 0);
+        put16(branch, 1, second.length + 3);
+        parts.push(prompt, branch, second, jump(first.length), first);
         continue;
       }
       if (node?.type === 'enemyHp') {
-        requireRuntime();
-        fields(node, ['type', 'enemy', 'hp'], [], 'encounter HP step');
-        check(enemies.has(node.enemy), `Undeclared story enemy: ${node.enemy}`);
-        const opcode = Uint8Array.of(SET_ENCOUNTER_HP, enemies.get(node.enemy), 0, 0);
-        put16(opcode, 2, integer(node.hp, 1, 999, 'Encounter HP'));
-        parts.push(opcode);
-        continue;
+        check(false, 'enemyHp is reserved: custom runtime instructions are disabled; use native scene instructions');
       }
       fields(node, ['type', 'flag', 'then'], ['else'], 'conditional step');
       check(node.type === 'if' && typeof node.flag === 'string' && Object.hasOwn(bindings, node.flag),
@@ -145,7 +131,7 @@ function compileBeats(recipe, addLine, anchor, commands, profile, enableChoices)
   }
   const bytes = compile(recipe.steps, 0);
   check(bytes.length, 'A story fragment needs at least one step');
-  return { bytes, usesRuntime };
+  return { bytes, usesRuntime: false };
 }
 
 // Bind to a proven native dialogue point and continue it under the same scene context.
@@ -197,7 +183,7 @@ export function lowerStoryEdits(rom, project) {
       const newLine = integer(line++, 0, 239, 'New story dialogue selector');
       effective.dialogue[lineKey(page, newLine)] = { ...lineData, flags: records[selector].flags };
       return newLine;
-    }, anchor.operands, original.commands, rom.profile, project.patches?.storyChoices === true);
+    }, anchor.operands, original.commands, rom.profile);
     usesRuntime ||= compiled.usesRuntime;
     blocks.set(key, new Map([[anchor.offset, compiled.bytes]]));
     changes.push({ kind: 'story', target: name, action: 'add', before: null, after: recipe });

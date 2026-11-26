@@ -1,6 +1,24 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '实时模拟': 'Simulation',
+  '播放': 'Play', '暂停': 'Pause', '下一步': 'Next', '重新开始': 'Restart',
+  '播放速度': 'Playback speed', '速度': 'Speed', '预览地图': 'Preview map', '地图': 'Map',
+  '地图 {0}': 'Map {0}', '选择地图上下文': 'Choose a context map',
+  '场景模拟画面': 'Scene simulation stage', '本地 ROM 地图': 'Map from local ROM',
+  '地图来自本地 ROM；角色位置使用示意标记。': 'Map pixels come from your ROM. Actor positions are schematic markers.',
+  '当前仅使用原版场景指令；自定义指令保留但停用。': 'Only native scene instructions are active. Custom instructions are retained but disabled.',
+  '取消并重问': 'Cancel and re-prompt', '原生取消': 'Native cancel',
+  '跳过未模拟指令': 'Skip unsupported instruction', '执行流程': 'Execution flow', '接下来': 'Up next',
+  '准备': 'Ready', '选择': 'Choice', '等待': 'Waiting', '需要确认': 'Needs attention',
+  '战斗入口': 'Battle boundary', '播放结束': 'Finished', '跳过战斗步骤': 'Battle step skipped',
+  '重新提问': 'Re-prompt', '手动跳过': 'Skipped manually', '地图读取失败': 'Map unavailable',
+  '此场景需要选择地图上下文。': 'Choose the map supplied by this scene’s game context.',
+  '已到战斗入口，模拟在此暂停。': 'Battle begins here. Simulation stops before combat.',
+  '尚未模拟': 'Unsupported in this preview',
+  '已接回原对白；后续原生流程未执行。': 'Original dialogue resumed. Later native flow is outside this fragment preview.',
+  '场景播放结束。': 'Scene playback finished.', '尚未选择地图': 'No map selected',
+
   '剧情片段': 'Story fragment',
   '补丁选项': 'Patch options',
   '剧情选择与敌人 HP': 'Story choices and enemy HP',

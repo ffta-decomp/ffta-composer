@@ -13,6 +13,10 @@ ships one offline-capable HTML file and needs no game inputs for its build.
   repair, duplicate, or add scene entries.
 - **Cutscene** authors the opening cast, dialogue, movement, and facing.
   Goblin Patrol demonstrates the opening, encounter, victory, and continuation.
+- **Simulation** plays the current project with a local ROM map, schematic actor
+  markers, dialogue, choices, and an execution trace. Pause, step, restart, and
+  speed controls are available. Playback stops before combat. See the
+  [simulation contract and limitations](docs/simulation.md).
 - **Declarative story fragments** insert dialogue and flag-driven branches at an
   existing scene entry. Open the Herb Picking example in the story timeline
   by importing the [JSON](examples/herb-arrival.json) or [Lua](examples/herb-arrival.lua) project.
@@ -24,10 +28,11 @@ ships one offline-capable HTML file and needs no game inputs for its build.
   Runtime unit spawning remains experimental.
 
 **[All 114 native VM instructions and runtime analysis](docs/scene-vm.md)** ·
+[Runtime capabilities and additional native tests](docs/runtime-capabilities.md) ·
 [JSON descriptions](docs/scene-vm-instructions.json) · [Lua expression reference](docs/scene-vm-examples.lua)
 
 **[Complete authoring reference](docs/instructions.md)** covers JSON/Lua syntax,
-31 editable operations, text tokens, native choice menus, optional HP patches,
+31 editable operations, text tokens, native choice menus, reserved custom extensions,
 and evidence boundaries. Nested-choice fixture: [JSON](examples/herb-ward.json) /
 [Lua](examples/herb-ward.lua).
 

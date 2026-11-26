@@ -2,9 +2,6 @@
   "format": "ffta.scene-project/v1",
   "profile": "ffta-us-retail",
   "baseSha256": "43fc8204c6dceee58828aebc7af0c72eb807e99f35ad641c8bb0a4fa8b6edc19",
-  "patches": {
-    "storyChoices": true
-  },
   "storyEdits": {
     "herb-ward": {
       "title": "The Captain's Ward",
@@ -17,11 +14,6 @@
           "dialogue": 6
         }
       },
-      "enemies": {
-        "captain": {
-          "slot": 0
-        }
-      },
       "steps": [
         {
           "type": "say",
@@ -30,7 +22,7 @@
         },
         {
           "type": "say",
-          "text": "Break it and he weakens.\nLeave it and he fights\nat full strength."
+          "text": "We can scatter the shards,\nkeep them, flank, or duel.\nWhich route do we take?"
         },
         {
           "type": "choose",
@@ -51,12 +43,7 @@
                     {
                       "type": "say",
                       "speaker": "montblanc",
-                      "text": "His guard is gone.\nOnly 12 HP, kupo!"
-                    },
-                    {
-                      "type": "enemyHp",
-                      "enemy": "captain",
-                      "hp": 12
+                      "text": "Scatter the shards, kupo!\nWe will take this route."
                     }
                   ]
                 },
@@ -66,12 +53,7 @@
                     {
                       "type": "say",
                       "speaker": "montblanc",
-                      "text": "He kept some power.\n28 HP, kupo!"
-                    },
-                    {
-                      "type": "enemyHp",
-                      "enemy": "captain",
-                      "hp": 28
+                      "text": "Keep the shards, kupo!\nWe will take this route."
                     }
                   ]
                 }
@@ -94,12 +76,7 @@
                     {
                       "type": "say",
                       "speaker": "montblanc",
-                      "text": "His ward slipped.\n52 HP, kupo!"
-                    },
-                    {
-                      "type": "enemyHp",
-                      "enemy": "captain",
-                      "hp": 52
+                      "text": "Flank the captain, kupo!\nWe will take this route."
                     }
                   ]
                 },
@@ -109,12 +86,7 @@
                     {
                       "type": "say",
                       "speaker": "montblanc",
-                      "text": "His ward holds.\n72 HP, kupo!"
-                    },
-                    {
-                      "type": "enemyHp",
-                      "enemy": "captain",
-                      "hp": 72
+                      "text": "Duel the captain, kupo!\nWe will take this route."
                     }
                   ]
                 }
