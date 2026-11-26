@@ -3,6 +3,7 @@
 import { check } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { pageKey, programKey } from './rom.mjs';
+import {describeSceneActor} from './scene-actors.mjs';
 
 /**
  * Build a static reading of the selected program. Branch destinations are
@@ -66,8 +67,9 @@ export function describeStory(rom, change, id, variant = 0) {
     }
     return [...inserted, step];
   });
-  const steps = linear.map(step => step.kind === 'dialogue' && step.pageScope === 'scene'
-    ? { ...step, dialogue: { page, line: step.textSelector, text: lines.get(step.textSelector) ?? null } }
+  const steps = linear.map(step => step.kind === 'dialogue'
+    ? {...step, speaker:describeSceneActor(step.speakerHandle,id),
+      ...(step.pageScope === 'scene' ? {dialogue:{page,line:step.textSelector,text:lines.get(step.textSelector) ?? null}} : {})}
     : step);
   return { format: 'ffta.scene-story/v1', scene: id, script, page, steps };
 }

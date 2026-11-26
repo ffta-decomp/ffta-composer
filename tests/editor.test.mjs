@@ -296,6 +296,6 @@ test('same-layout mods keep their own identity and untouched data', { skip: !sou
   project.openings[OPENING_ID] = openingExample();
   assert.throws(() => plan(rom, project), /verified retail profile/);
 
-  input[0x1000] ^= 1;
-  await assert.rejects(openRom(input), /changes the US engine/);
+  input[0x122abc] ^= 1;
+  await assert.rejects(openRom(input), /changes the scene VM/);
 });

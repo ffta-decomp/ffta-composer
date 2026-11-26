@@ -1,6 +1,7 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
-import { PROFILE, OPERATIONS, US_LAYOUT_SIGNATURES, US_CN_ENGINE_SIGNATURE } from './profile.mjs';
+import { PROFILE, OPERATIONS, US_LAYOUT_SIGNATURES } from './profile.mjs';
+import {detectTextEncoding} from './text-encoding.mjs';
 import { VM_INSTRUCTIONS } from './vm-instructions.mjs';
 import { check, digest, hex, u16, u32 } from './binary.mjs';
 import { readLine, preview } from './text.mjs';
@@ -96,6 +97,30 @@ function readPages(bytes, chinese = false) {
   const limits = [...new Set([...outer, ...children, chinese ? bytes.length : end])].sort((a, b) => a - b);
   const unique = new Map();
   const result = new Map();
+  // Updated translations may put record bodies beyond the next page header.
+  // Bound each record against all headers/record starts, not page adjacency.
+  const relocatedLimits=new Map();
+  const directories=new Map();
+  if(chinese) {
+    const boundaries=new Set([bytes.length]);
+    for(const offset of new Set([...outer.filter((_,i)=>i!==nested),...children])) {
+      check(offset>=start+pages*4&&offset+2<=bytes.length,'Invalid dialogue page pointer');
+      const directory=u16(bytes,offset);
+      check(directory%2===0&&directory>=4&&directory<8192&&offset+directory<=bytes.length,'Invalid dialogue directory');
+      const slots=Array.from({length:directory/2},(_,i)=>u16(bytes,offset+i*2)),count=slots.indexOf(65535);
+      check(count>0,'Invalid dialogue directory');
+      directories.set(offset,{directory,slots,count});boundaries.add(offset);boundaries.add(offset+directory);
+      for(const relative of slots.slice(0,count)) {
+        check(relative>=directory&&offset+relative<bytes.length,'Invalid dialogue record bounds');
+        boundaries.add(offset+relative);
+      }
+    }
+    const headers=[...directories].map(([at,d])=>[at,at+d.directory]);
+    for(const [offset,{slots,count}] of directories)for(const relative of slots.slice(0,count))
+      check(!headers.some(([first,last])=>offset+relative>=first&&offset+relative<last),'Dialogue record points inside a directory');
+    const ordered=[...boundaries].sort((a,b)=>a-b);
+    for(let i=0;i<ordered.length-1;i++)relocatedLimits.set(ordered[i],ordered[i+1]);
+  }
   function add(page, variant, offset) {
     if (!unique.has(offset)) {
       const limit = limits[limits.indexOf(offset) + 1];
@@ -107,8 +132,9 @@ function readPages(bytes, chinese = false) {
       check(count>0 && slots[count]===65535, 'Invalid dialogue directory');
       const records = Array.from({ length: count }, (_, i) => {
         const first = offset + u16(bytes, offset + i * 2);
-        const last = i + 1 === count ? limit : offset + u16(bytes, offset + (i + 1) * 2);
-        check(first >= offset + directory && first < last && last <= limit, 'Invalid dialogue record bounds');
+        const last = chinese ? Math.min(relocatedLimits.get(first),offset+65535)
+          : i + 1 === count ? limit : offset + u16(bytes, offset + (i + 1) * 2);
+        check(first >= offset + directory && first < last && last <= (chinese?bytes.length:limit), 'Invalid dialogue record bounds');
         let record;
         try { record=readLine(bytes,first,last); }
         catch(error) {
@@ -121,7 +147,7 @@ function readPages(bytes, chinese = false) {
           record={flags:u16(bytes,first),encoding:bytes[first]&1?'alternate':'standard',
             tokens:[],preview:'⟨unparsed⟩',opaque:true,decodeError:error.message,storedLength:4};
         }
-        return { index: i, start: first, end: chinese && i+1===count ? first+record.storedLength : last, ...record };
+        return { index: i, start: first, end: chinese ? first+record.storedLength : last, ...record };
       });
       unique.set(offset, records);
     }
@@ -146,23 +172,26 @@ export async function openUSRom(input) {
   const bytes = Uint8Array.from(input);
   const sha256 = await digest(bytes);
   const retail = sha256 === PROFILE.sha256;
-  let chinese = false;
+  const encodingEvidence=detectTextEncoding(bytes);
+  const chinese=encodingEvidence.kind==='us-cn';
   if (!retail) {
     const gameCode = String.fromCharCode(...bytes.subarray(0xac, 0xb0));
     check(gameCode === PROFILE.gameCode && bytes[0xbc] === 0, 'This game or ROM revision needs its own profile');
     for (const [start, end, expected] of US_LAYOUT_SIGNATURES) {
       const actual=await digest(bytes.subarray(start,end));
-      if(start===0xc0&&actual===US_CN_ENGINE_SIGNATURE)chinese=true;
-      check(actual === expected || (start===0xc0&&chinese),
-        'This ROM changes the US engine or scene instruction table and needs its own profile');
+      check(actual === expected,
+        'This ROM changes the scene VM or instruction table and needs its own profile');
     }
   }
   for (const table of [PROFILE.index, PROFILE.scripts, PROFILE.dialogue]) {
     check(u32(bytes, table.pointer) === PROFILE.bus + table.start, 'Unexpected native pointer');
   }
+  check(u32(bytes,0x122b10)===PROFILE.bus+PROFILE.scripts.descriptors,'Unexpected scene VM descriptor pointer');
   const specs = opcodeSpecs(bytes);
   const { programs, directories } = readPrograms(bytes, specs);
-  const { pages, outer, children } = readPages(bytes, chinese);
+  const relocated=Array.from({length:PROFILE.dialogue.pages},(_,i)=>
+    PROFILE.dialogue.start+u32(bytes,PROFILE.dialogue.start+i*4)).some(at=>at>=PROFILE.dialogue.end);
+  const { pages, outer, children } = readPages(bytes, chinese||relocated);
   const scenes = Array.from({ length: PROFILE.index.count }, (_, id) => {
     const at = PROFILE.index.start + id * 4;
     const [oneBasedGroup, program, dialoguePage, reserved] = bytes.subarray(at, at + 4);
@@ -172,7 +201,7 @@ export async function openUSRom(input) {
     return { id, status, script, dialoguePage, reserved };
   });
   check(programs.size === 228 && pages.size === 88, 'Unexpected retail scene archive topology');
-  return { bytes, profile: retail ? PROFILE.id : chinese ? PROFILE.chineseId : PROFILE.compatibleId, sha256, scenes, specs, programs, directories, pages, outer, children };
+  return { bytes, profile: retail ? PROFILE.id : chinese ? PROFILE.chineseId : PROFILE.compatibleId, sha256, encodingEvidence, scenes, specs, programs, directories, pages, outer, children };
 }
 
 /** Re-label tokens immutably; byte parsing and engine compatibility stay separate. */
@@ -195,7 +224,7 @@ export function catalog(rom, { includePrograms = false, includeDialogue = false 
     };
   });
   return {
-    format: 'ffta.scene-catalog/v1', profile: rom.profile, baseSha256: rom.sha256, scenes,
+    format: 'ffta.scene-catalog/v1', profile: rom.profile, baseSha256: rom.sha256, encodingEvidence:rom.encodingEvidence, scenes,
     opcodes: [...rom.specs.values()],
     vmInstructions: VM_INSTRUCTIONS,
     pages: [...rom.pages.values()].map(({ key, page, variant, records }) => ({

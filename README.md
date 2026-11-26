@@ -13,10 +13,11 @@ ships one offline-capable HTML file and needs no game inputs for its build.
   repair, duplicate, or add scene entries.
 - **Cutscene** authors the opening cast, dialogue, movement, and facing.
   Goblin Patrol demonstrates the opening, encounter, victory, and continuation.
-- **Simulation** plays the current project with a local ROM map, schematic actor
-  markers, dialogue, choices, and an execution trace. Pause, step, restart, and
+- **Simulation** plays the current project with local ROM maps, static character
+  poses, dialogue speakers, camera movement, choices, and an execution trace. Pause, step, restart, and
   speed controls are available. Playback stops before combat. See the
-  [simulation contract and limitations](docs/simulation.md).
+  [simulation contract and limitations](docs/simulation.md) and
+  [JavaScript runtime coverage](docs/js-runtime.md).
 - **Declarative story fragments** insert dialogue and flag-driven branches at an
   existing scene entry. Open the Herb Picking example in the story timeline
   by importing the [JSON](examples/herb-arrival.json) or [Lua](examples/herb-arrival.lua) project.

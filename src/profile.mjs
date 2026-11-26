@@ -14,16 +14,13 @@ export const PROFILE = Object.freeze({
   dialogue: { pointer: 0x9a88, start: 0x9c1484, end: 0xa19970, pages: 63, nested: 61, variants: 26 },
 });
 
-// Executable and descriptor signatures for same-layout data mods.
+// Protect the scene VM ABI, not unrelated engine patches or translation updates.
 export const US_LAYOUT_SIGNATURES = [
-  [0xc0, 0x36d4bc, '83ac45e86a90be5f4d9157cdfb9065a8b18ce12239eda72ae28cf530664fb7f1'],
+  [0x121e9c, 0x123d64, 'd5c903f44118fdc42cc462ce0c401a462f93cece10554bde7bb292e7abab381b'],
   [PROFILE.scripts.descriptors, PROFILE.scripts.descriptors + 0x72 * 6,
     '8a48d25ccfc6f9be94e2b3032628798e8e461aba5c8a4c6bcd46d11455bfd659'],
 ];
 
-// Pinned US Chinese v1.1 executable fingerprint; data edits still validate
-// against the original descriptor table and bounded resource topology.
-export const US_CN_ENGINE_SIGNATURE = '6988267fdc72989156d49cf2c7994ac29290ce02550219cc2cbbec8a300ff8b4';
 
 // Names describe observed operations. Operand meanings are exposed only where verified.
 const byte = key => ({ key, size: 1 });

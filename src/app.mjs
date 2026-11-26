@@ -11,6 +11,8 @@ import { build, importProject, inspectRom, openRom, plan, previewBuild } from '.
 import { formatProjectText, parseProjectText } from './project-text.mjs';
 import { localizeShell, t, tr } from './i18n.mjs';
 import { describeStory } from './story.mjs';
+import {describeSceneActor} from './scene-actors.mjs';
+import {speakerLabel} from './ui/speaker.mjs';
 import { $, button, dialog, download, downloadJson, el, field, handle, notice, number, section,
   serialize, table, textarea } from './ui/controls.mjs';
 import { createBattleEventPanel } from './ui/battle-event.mjs';
@@ -29,6 +31,7 @@ drawTerrain($('#terrain'));
 bindMenus();
 const state = { rom: null, name: '', project: null, plan: null, scenes: [], selected: 1, tab: 'story', page: null,
   query: '', filter: 'all', undo: [], redo: [], saved: '' };
+let pendingCharacterTable;
 const statusKeys = { added: '新增', unresolved: '待补全', changed: '已修改', retail: '原版' };
 const keySort = (a, b) => a.localeCompare(b, 'en', { numeric: true });
 
@@ -67,10 +70,13 @@ function restore(collection, key) {
 }
 
 async function load(bytes, name) {
-  const { rom, project } = await openRom(bytes);
+  const { rom, project: restored } = await openRom(bytes);
+  const project=pendingCharacterTable===undefined?restored:
+    importProject(rom,restored,{...restored,characterTable:pendingCharacterTable},'replace');
   inspector.close({ restoreFocus: false });
   Object.assign(state, { rom, name, selected: 1, tab: 'story', page: null, query: '', filter: 'all',
-    undo: [], redo: [], saved: serialize(project) });
+    undo: [], redo: [], saved: serialize(restored) });
+  pendingCharacterTable=undefined;
   $('#search').value = '';
   $('#filter').value = 'all';
   update(project);
@@ -281,6 +287,8 @@ function renderStory(body, scene) {
       : t(type[step.kind])));
     item.append(heading);
     if (step.kind === 'dialogue') {
+      const label=speakerLabel(step.speaker);
+      heading.append(el('span',label,'dialogue-speaker'));
       const actions = el('div', undefined, 'buttons');
       if (step.dialogue) {
         const text = readableDialogue(step.dialogue.text) ?? t('此页缺少该对白。');
@@ -291,7 +299,7 @@ function renderStory(body, scene) {
         }
         if (!hasAuthoredFragment && step.textSelector <= records.length) {
           const edit = button(text, () => editDialogue(story.page, step.textSelector, variants), 'dialogue-preview line-edit');
-          edit.setAttribute('aria-label', `${t('编辑对白')} · ${text}`);
+          edit.setAttribute('aria-label', `${t('编辑对白')} · ${label} · ${text}`);
           item.append(edit);
         } else {
           item.append(el('p', text, 'dialogue-preview'));
@@ -349,17 +357,15 @@ function writeStoryLine(story, commands, step, mode) {
   const sharedProgram = state.scenes.some(scene => scene.id !== story.scene && programKey(scene.script.group, scene.script.program) === key);
   const destination = sharedPage ? nextPage() : Number(story.page);
   const speaker = el('select');
-  const sameSpeaker = el('option', t('当前说话者'));
+  const sameSpeaker = el('option', `${t('当前说话者')} · ${speakerLabel(describeSceneActor(step.speakerHandle,story.scene))}`);
   sameSpeaker.value = '';
   speaker.append(sameSpeaker);
   const seen = new Set([step.speakerHandle]);
-  let dialogueNumber = 0;
   for (const event of describeStory(state.rom, state.plan, story.scene).steps) {
     if (event.kind !== 'dialogue') continue;
-    dialogueNumber++;
     if (seen.has(event.speakerHandle)) continue;
     seen.add(event.speakerHandle);
-    const option = el('option', tr`对白 ${dialogueNumber} 的说话者`);
+    const option = el('option', speakerLabel(event.speaker));
     option.value = String(event.speakerHandle);
     option.dataset.presentationFlags = String(event.presentationFlags);
     speaker.append(option);
@@ -415,6 +421,18 @@ function renderIndex(body, scene) {
   if (scene.id >= PROFILE.index.count) body.append(el('p', t('新索引已经分配。要在游戏中播放它，还需要让现有剧情触发入口引用这个 ID。'), 'note'));
 }
 
+function dialogueSpeakers(address) {
+  const references=new Map(),[page,variant]=address.split('/').map(Number);
+  for(const scene of state.scenes.filter(s=>s.dialoguePage===page)) {
+    for(const step of describeStory(state.rom,state.plan,scene.id,variant??0).steps) {
+      if(step.kind!=='dialogue'||step.pageScope!=='scene')continue;
+      if(!references.has(step.textSelector))references.set(step.textSelector,new Set());
+      references.get(step.textSelector).add(speakerLabel(step.speaker));
+    }
+  }
+  return references;
+}
+
 function renderDialogue(body, scene) {
   const address = state.page ?? activePage(scene);
   const selector = el('select');
@@ -441,10 +459,13 @@ function renderDialogue(body, scene) {
   const sharing = state.scenes.filter(row => row.dialoguePage === Number(address.split('/')[0])).length;
   if (sharing > 1) body.append(el('p', tr`这个对白页被 ${sharing} 个场景索引引用。若只改当前场景，可先复制它的对白页再重新关联。`, 'note'));
   const list = el('ol', undefined, 'dialogue-list');
+  const speakers=dialogueSpeakers(address);
   records.forEach((record, line) => {
     const item = el('li', undefined, 'dialogue-row');
     const edit = button(readableDialogue(record.preview) || t('（空）'), () => editDialogue(address, line), 'line-edit');
-    item.append(el('span', String(line + 1).padStart(2, '0'), 'line-number'), edit);
+    const content=el('div',undefined,'dialogue-row-content');
+    content.append(el('small',[...(speakers.get(line)??[])].join(' / ')||t('未被场景对白指令引用'),'dialogue-speaker'),edit);
+    item.append(el('span', String(line + 1).padStart(2, '0'), 'line-number'), content);
     if (record.edited) item.append(el('span', t('已修改'), 'line-change'));
     list.append(item);
   });
@@ -669,7 +690,8 @@ function editDialogue(address, index, actions = []) {
     restore('dialogue', key);
     inspector.close();
   })));
-  inspector.open(t('编辑对白'), [storyText, content.label, native, extras], () => {
+  const speakers=el('p',[...(dialogueSpeakers(address).get(index)??[])].join(' / ')||t('未被场景对白指令引用'),'dialogue-speaker');
+  inspector.open(t('编辑对白'), [speakers,storyText, content.label, native, extras], () => {
     const data = mode.value === 'tokens' ? { tokens: JSON.parse(tokens.input.value) }
       : mode.value === 'text' ? { text: content.input.value }
         : { tokens: editDialogueRuns(runs, inputs.map(input => input?.value), encoding.value, state.project.characterTable) };
@@ -751,26 +773,29 @@ $('#project-file').onchange = handle(async event => {
   if (file) importDialog(parseProjectText(await file.text()));
 });
 function loadCharacterTable(source,name) {
-  check(state.rom,t('请先打开 ROM'));
   const characterTable=parseCharacterTable(source,name);
-  commit({...state.project,characterTable});
+  if(state.rom)commit({...state.project,characterTable});
+  else {pendingCharacterTable=characterTable;fillCharacterTableSelect($('#character-table-select'));}
   return characterTableCodec(characterTable).summary();
 }
 function fillCharacterTableSelect(select) {
-  const id=characterTablePresetId(state.project?.characterTable);
+  const table=state.rom?state.project.characterTable:pendingCharacterTable;
+  const id=!state.rom&&table===undefined?'auto':characterTablePresetId(table);
   const labels={'us-retail':'原版美版','us-cn-v1.1':'美版汉化 v1.1'};
-  const choices=CHARACTER_TABLE_PRESETS.map(p=>({id:p.id,label:t(labels[p.id])}));
-  if(id==='custom')choices.push({id:'custom',label:`${t('自定义字表')} · ${state.project.characterTable.name}`});
+  const choices=[{id:'auto',label:t('按 ROM 自动选择')},...CHARACTER_TABLE_PRESETS.map(p=>({id:p.id,label:t(labels[p.id])}))];
+  if(id==='custom')choices.push({id:'custom',label:`${t('自定义字表')} · ${table.name}`});
   choices.push({id:'import',label:t('导入自定义字表…')});
   select.replaceChildren(...choices.map(choice=>{
     const option=el('option',choice.label);option.value=choice.id;return option;
   }));
-  select.value=id;select.disabled=!state.rom;select.setAttribute('aria-label',t('字表选择'));
+  select.value=id;select.disabled=false;select.setAttribute('aria-label',t('字表选择'));
 }
 function selectCharacterTable(id) {
-  check(state.rom,t('请先打开 ROM'));
-  const characterTable=presetCharacterTable(id);
-  try {commit({...state.project,characterTable});}
+  const characterTable=id==='auto'?(state.rom?defaultCharacterTable(state.rom):undefined):presetCharacterTable(id);
+  try {
+    if(state.rom)commit({...state.project,characterTable});
+    else pendingCharacterTable=characterTable;
+  }
   finally {fillCharacterTableSelect($('#character-table-select'));}
   return characterTable?characterTableCodec(characterTable).summary():null;
 }
@@ -785,17 +810,18 @@ function bindCharacterTableSelect(select,refreshDialog=false) {
 }
 bindCharacterTableSelect($('#character-table-select'));
 function showCharacterTable() {
-  const table=state.project.characterTable;
+  const table=state.rom?state.project.characterTable:pendingCharacterTable;
   const summary=table?characterTableCodec(table).summary():null;
   const select=el('select');fillCharacterTableSelect(select);bindCharacterTableSelect(select,true);
   dialog(t('字表'),[
     field(t('字表选择'),select),
-    el('p',summary?`${summary.name} · ${summary.labelled}/${summary.entries} · ${summary.aliases} ${t('重复字符别名')}`:t('原版美版')),
+    el('p',summary?`${summary.name} · ${summary.labelled}/${summary.entries} · ${summary.aliases} ${t('重复字符别名')}`:
+      t(!state.rom&&pendingCharacterTable===undefined?'按 ROM 自动选择':'原版美版')),
     el('p',t('字表只改变文字映射，不会安装字体。字表会随项目保存。'),'note'),
     button(t('导入字表'),()=>$('#character-table-file').click()),
     ...(table?[
       button(t('导出字表'),()=>downloadJson('ffta.character-table.json',table)),
-      button(t('恢复默认字表'),handle(()=>{commit({...state.project,characterTable:defaultCharacterTable(state.rom)});showCharacterTable();})),
+      button(t('恢复默认字表'),handle(()=>{selectCharacterTable('auto');showCharacterTable();})),
     ]:[]),
   ],null);
 }
@@ -902,7 +928,7 @@ window.fftaSceneEditor = Object.freeze({
   },
   getProject() { check(state.rom, 'Open a ROM first'); return structuredClone(state.project); },
   loadCharacterTable(source,name) { return structuredClone(loadCharacterTable(source,name)); },
-  getCharacterTable() { return structuredClone(state.project?.characterTable ?? null); },
+  getCharacterTable() { return structuredClone((state.rom?state.project.characterTable:pendingCharacterTable) ?? null); },
   getCharacterTablePresets() { return structuredClone(CHARACTER_TABLE_PRESETS); },
   selectCharacterTable(id) { return structuredClone(selectCharacterTable(id)); },
   getSimulation() { return panels.get('simulation').getSnapshot(); },

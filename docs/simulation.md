@@ -18,7 +18,7 @@ turns, damage, AI, victory, or rewards. A scene preview is not a hardware emulat
   Composer's own existing custom-LZ primitive where its format matches.
 - Record format-research sources from ffta-us-decomp, including map resource
   extractors and retail consumers. Do not copy those implementations.
-- Treat map animations, original actor sprites, pixel-perfect presentation,
+- Treat map animations, full actor animation, pixel-perfect presentation,
   audio, save progress, and combat as separate capabilities rather than implied
   accuracy claims.
 
@@ -86,9 +86,10 @@ context is verified for retail and reviewed US Chinese scene14 fixtures; arbitra
 require an explicit map selection. An explicit native map operand also subtracts1.
 
 Maps are static compositions of original tiles, palettes, flips, and arrangement
-layers decoded in browser memory. Original actor sprites, their animation frames,
-precise camera transforms, occlusion, audio, and dynamic map animation are not
-emulated. Actor markers are schematic and are labeled as such. Missing animation
+layers decoded in browser memory. Indexed characters use decoded static sprite
+poses; unbound actors retain numbered schematic markers. Complete animation,
+terrain-height projection, occlusion, audio, and dynamic map animation are not
+emulated. Missing animation
 tiles can leave gaps; the map adapter exposes a missingTiles count.
 
 Graphics wrapper `0x22` includes a byte destination offset before its nested
@@ -96,6 +97,68 @@ compressed-bank header. The preview relocates those tiles before resolving
 arrangement entries. The Herb Picking bank starts at byte `0x820`; ignoring this
 offset produces an incorrect mosaic. This follows the retail loader at
 `0801a518`, specifically its destination and transfer setup at `0801a6a0–0801a6f6`.
+
+## Speakers, character poses, and camera
+
+Story cards, dialogue-page rows, and the dialogue inspector identify speakers
+from actual `0F` operands, including inserted dialogue. A text line can have
+multiple speaker references; the page view lists them without assuming a single
+owner. Unreferenced lines are labeled explicitly. Fixed reviewed identities have
+names; unresolved handles remain `Actor N`. These are editor identity labels,
+not save-dependent player names or a complete translated name database.
+
+Playback snapshots retain `speakerInfo` (handle, name, identity source), including
+native choices, and a placed `actorId` for speech when available. The panel shows
+the speaker's static pose, name, and handle, highlights their map position and
+cast entry, and offers Locate speaker. Missing placement does not create a
+character at a fabricated origin.
+
+`actor-preview.mjs` follows indexed-unit records at `0x5273D8` (14-byte stride),
+sprite resource pointers at `0x390E44`, six-slot descriptor groups, 20-byte frame
+records, 4bpp pixel bank `0x69B89C`, and OAM bank `0x852E7C`. It composes signed
+OAM rectangles with transparent index zero and original palette bytes. It uses
+the first drawable pose of the two base views, with mirrored opposite facings.
+Palette mode zero is the preview default: common palettes start at `0x419D60`;
+indexed-unit overrides start at `0x41A560`. Palette modes one/two are available
+to the decoder. Runtime animation selection, palette effects, and exact facing
+selection have not been accepted against gameplay. Battle handles `128+` need
+encounter-unit bindings and currently remain markers; no ROM assets are shipped.
+
+Native camera `47` decodes signed coordinate operands. Mode one uses frame
+duration, zero duration jumps, mode two derives duration from distance/speed,
+and mode zero reads the native speed table at `0x3A8190`. Camera `46` targets a
+known placed actor. The semantic model interpolates the resulting view center;
+it does not emulate the native integer curve or terrain elevation. Mode three
+requests explicit external-service confirmation. The stage provides script-camera mode,
+full-map view, drag-to-pan, zoom, and speaker focus. View controls never edit
+the script. Scene 6 uses the opening's last explicit placements as an approximate
+inherited school context; actual save/battle runtime placement may differ.
+
+Actor projection uses the reviewed flat-map origin `(256,256)`, 16/8-pixel
+isometric increments, and the half-tile center. Other inherited origins/heights
+can differ; this remains a scene preview rather than a pixel-exact emulator.
+
+### Validation on 2026-11-26
+
+Eight decoded static poses (units 15, 16, 17, 23, 24, 76, 28, 77) match an
+independent reference compositor byte for byte and were visually inspected.
+Model regression covers speaker associations, inserted lines, native choice
+speakers, signed camera jumps, halfway/completed pans, actor targets, unsupported
+mode three, source preservation, and malformed sprite pointers. These checks do
+not establish gameplay animation or browser-rendered scene equivalence.
+
+Additional format references: `extract_sprite_graphics.py`,
+`extract_character_sprite_links.py`, native consumers `08022A04`, `080CBA3C`,
+`080CBB7C`, `08071704`, `081227F8`, `081228D4`, `0801BA20`, and `0801BB0C`
+in the local ffta-us-decomp research tree. Only format/behavior findings were
+used; the new decoder and camera model are independently written Composer code.
+
+The full local suite passes **49 tests with no skips** when supplied with the
+retail ROM, Chinese reference, owner mapping, and three updated Chinese inputs.
+All four Chinese revisions preserve no-op exports and exact edited-ROM reopen
+builds. DOM integration also covers the visible speaker references/inspector,
+speaker pose and cast highlight, focus, zoom, view controls, and bilingual labels.
+DOM checks use canvas stubs; browser-rendered pixels remain unverified.
 
 ## Format-research attribution
 

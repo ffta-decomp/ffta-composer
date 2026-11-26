@@ -82,6 +82,7 @@ test('native menu tokens preserve labels and choice zero alone takes the branch'
   for(const result of[0,1,255]){
     const simulation=createSceneSimulation(rom,project,234,{mapId:0});
     const s=simulation.step();assert.equal(s.phase,'choice');
+    assert.equal(s.choice.speakerInfo.handle,15);assert.equal(s.choice.speakerInfo.name,'Marche');
     assert.equal(s.choice.prompt,'Which route?');assert.deepEqual(s.choice.labels,['A / B','Second']);
     if(result===255)simulation.cancel();else simulation.choose(result);
     simulation.step();const next=simulation.step();
@@ -197,7 +198,7 @@ test('native playback pauses on unsupported behavior and bounds loops', {skip:!s
   const {rom,project}=await open();
   project.scenes[234]={script:{group:0,program:12},dialoguePage:1};
   project.programs['0/12']={instructions:[
-    {operation:'selectCurrentSceneEntity',operands:{handle:15}},
+    {operation:'moveSceneCamera',operands:{x:0,y:0,mode:4,duration:1}},
     {operation:'finishSceneTask',operands:{}},
   ]};
   let simulation=createSceneSimulation(rom,project,234,{mapId:0});

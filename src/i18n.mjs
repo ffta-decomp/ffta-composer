@@ -1,10 +1,19 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '已到外部流程入口，预览在此结束。':'External workflow reached. This preview ends here.',
+  '等待游戏上下文':'Awaiting game context','请指定条件结果':'Choose a condition result',
+  '此外部步骤尚未复现，请确认预览继续':'This external step is not reproduced. Confirm to continue the preview',
+  '条件成立':'Condition true','条件不成立':'Condition false','确认继续预览':'Continue preview explicitly',
+  '未被场景对白指令引用':'No scene dialogue instruction references this line',
+  '镜头移动':'Camera movement','全图':'Full map','跟随脚本镜头':'Follow script camera','定位说话者':'Locate speaker','缩放':'Zoom',
+  '地图与静态角色来自本地 ROM；未绑定角色显示编号标记。拖动画面移动镜头。':'Map and static character poses come from your ROM. Unbound actors use numbered markers. Drag to pan.',
+  '角色 {0}':'Actor {0}', '说话者未指定':'Speaker unspecified', 'Teacher':'Teacher', 'Student':'Student',
   '字表':'Character table', '导入字表':'Import character table', '导出字表':'Export character table',
   '恢复默认字表':'Restore default character table', '默认美版字表':'Default US character table',
   '字表选择':'Character table selection','原版美版':'Original US','美版汉化 v1.1':'US Chinese v1.1',
   '自定义字表':'Custom character table','导入自定义字表…':'Import custom character table…',
+  '按 ROM 自动选择':'Automatic by ROM',
   '重复字符别名':'duplicate labels', '请先打开 ROM':'Open a ROM first',
   '字表只改变文字映射，不会安装字体。字表会随项目保存。':'Character tables map text; they do not install fonts. The table is saved with your project.',
   '此原生记录尚未解析，保留原始字节且不可编辑。':'This native record is unparsed. Its original bytes are preserved and read-only.',
