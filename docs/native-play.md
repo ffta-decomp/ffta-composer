@@ -115,10 +115,13 @@ byte-identical to the same mGBA release compiled natively. Actual app-module DOM
 integration checks native key input, canvas data, pause and tab lifecycle.
 The browser automation host was unavailable during this acceptance; that DOM
 check uses canvas stubs and does not establish browser pixel/audio quality.
-Full-battle acceptance covers the pinned retail input and the reviewed Chinese v1.2
-input `67d6ade5def84f86205551cb82baad7dda81f0ef28c71e2cb9cd1917e040e176`
-also reaches native postbattle scene 2 with the same continuous 34,227-frame keys;
-its final Chinese teacher dialogue was inspected. Different inputs can have
+Full-battle acceptance also covers the reviewed Chinese v1.2 input
+`67d6ade5def84f86205551cb82baad7dda81f0ef28c71e2cb9cd1917e040e176`.
+It reaches native postbattle scene 2 with the same continuous 34,227-frame keys;
+its final Chinese teacher dialogue was inspected. The reference Chinese input
+`ddbf29205a66d9711d8f6ec2ce7b2de481d3d58255efdc3791e45e1771548c03`
+also reaches scene 2 in a separate continuous 73,273-frame cold-boot recording,
+including additional native menu actions and turns. Different inputs can have
 different unit stats and RNG outcomes, so one recording is not an assertion
 that every revision follows identical turns.
 
