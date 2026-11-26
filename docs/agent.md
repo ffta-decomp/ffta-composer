@@ -25,6 +25,10 @@ previously opaque operations retain their native source/layout/byte protections.
    and allocation arrays. Resolve validation errors before applying.
 4. Apply to the working project, then save it or build the ROM.
 
+Custom character tables and the reviewed US Chinese layout are documented in
+[character table integration](character-tables.md). Mappings remain explicit project
+data; they do not bypass engine checks or install fonts.
+
 The browser bridge on the editor's own page exposes:
 
 - `await inspectRom(bytes)` → game code, SHA-256, profile, and editability
@@ -32,6 +36,10 @@ The browser bridge on the editor's own page exposes:
 - `getCatalog({ includePrograms, includeDialogue })`
 - `getStory(sceneId, variantIndex = 0)` → ordered story steps, resolved dialogue, and known branch offsets
 - `getProject()` → project object
+- `loadCharacterTable(source, name?)` → validated import and mapping counts
+- `getCharacterTable()` → normalized project mapping or `null`
+- `getCharacterTablePresets()` → available preset IDs/names
+- `selectCharacterTable("us-retail" | "us-cn-v1.1")` → select and validate a built-in mapping
 - `getSimulation()` → a cloned preview snapshot while the Simulation tab is active,
   otherwise `null`; see [simulation semantics and limitations](simulation.md)
 - `exportProject('json' | 'lua')` → complete project text

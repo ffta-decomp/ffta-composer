@@ -13,11 +13,13 @@
   <div class="brand"><span class="brand-icon" aria-hidden="true"></span><strong>FFTA Composer</strong></div>
   <div class="project-lamp" id="rom-name" hidden>未载入 ROM</div>
   <div class="top-actions">
+    <label class="character-table-control"><span>字表</span><select id="character-table-select" aria-label="字表选择"></select></label>
     <details class="menu" id="project-menu">
       <summary>项目<span class="chevron" aria-hidden="true"></span></summary>
       <div class="menu-items">
         <button id="open-rom">打开 ROM</button>
         <button id="import-project" data-needs-rom>导入项目</button>
+        <button id="character-table" data-needs-rom>字表</button>
         <button id="save-project" data-needs-rom>保存项目 JSON</button>
         <button id="save-project-lua" data-needs-rom>保存项目 Lua</button>
         <button id="patch-options" data-needs-rom data-retail-only>补丁选项</button>
@@ -30,6 +32,7 @@
 </header>
 <input type="file" id="rom-file" accept=".gba,application/octet-stream" hidden>
 <input type="file" id="project-file" accept=".json,.lua,application/json,text/x-lua" hidden>
+<input type="file" id="character-table-file" accept=".json,.csv,.tsv,.tbl,.txt" hidden>
 <div id="notice" role="status" hidden></div>
 
 <main id="welcome">

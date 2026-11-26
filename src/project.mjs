@@ -4,7 +4,9 @@ import { PROFILE } from './profile.mjs';
 import { STORY_VM_TABLE } from './story-runtime.mjs';
 import { lowerVmInstruction } from './vm-instructions.mjs';
 import { align, check, concat, digest, eq, integer, put16, put32, u16, u32 } from './binary.mjs';
-import { decodeInstructions, lineKey, openUSRom, pageKey, programKey } from './rom.mjs';
+import { decodeInstructions, lineKey, openUSRom, pageKey, programKey, withCharacterTable } from './rom.mjs';
+import { normalizeCharacterTable } from './character-table.mjs';
+import { defaultCharacterTable } from './character-table-presets.mjs';
 import { encodeLine, makePage, plainTokens, preview } from './text.mjs';
 import { lowerOpening, OPENING_BANNER, OPENING_ID, OPENING_OUTCOME, OPENING_ROSTER } from './opening.mjs';
 import { appendBeforeDialogue, insertDialogue } from './insertion.mjs';
@@ -17,7 +19,9 @@ const decoder = new TextDecoder('utf-8', { fatal: true });
 const footer = encoder.encode('FFTASCENE-V1');
 
 export function newProject(rom = { profile: PROFILE.id, sha256: PROFILE.sha256 }) {
-  return { format: FORMAT, profile: rom.profile, baseSha256: rom.sha256, scenes: {}, programs: {}, dialogue: {}, pages: {}, battleEvents: {}, openings: {} };
+  const characterTable=defaultCharacterTable(rom);
+  return { format: FORMAT, profile: rom.profile, baseSha256: rom.sha256, scenes: {}, programs: {}, dialogue: {}, pages: {}, battleEvents: {}, openings: {},
+    ...(characterTable?{characterTable}:{}) };
 }
 
 function fields(object, keys, label) {
@@ -94,7 +98,8 @@ function compileInstructions(commands, specs, original) {
 }
 
 export function plan(rom, project) {
-  fields(project, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits', 'patches'], 'project');
+  fields(project, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits', 'patches', 'characterTable'], 'project');
+  rom=withCharacterTable(rom,project.characterTable);
   check(project.format === FORMAT && project.profile === rom.profile && project.baseSha256 === rom.sha256, 'Project base ROM/profile mismatch');
   if (rom.profile !== PROFILE.id) {
     check(!collection(project.openings ?? {}, 'openings').length &&
@@ -171,16 +176,18 @@ export function plan(rom, project) {
     fields(data, ['text', 'tokens', 'encoding', 'flags'], 'dialogue');
     check((data.text === undefined) !== (data.tokens === undefined), 'Provide exactly one of text or tokens');
     const existing = page.records[line];
+    check(!existing?.opaque, 'Unparsed source dialogue is read-only; preserve its original bytes');
     const encoding = data.encoding ?? (data.text !== undefined ? 'standard' : existing?.encoding ?? 'standard');
-    const tokens = data.tokens ?? plainTokens(data.text, encoding);
-    const flags = data.flags ?? existing?.flags ?? 0x10;
-    const bytes = encodeLine(tokens, encoding, flags);
+    const tokens = data.tokens ?? (existing && existing.encoding===encoding && data.text===existing.preview
+      ? existing.tokens : plainTokens(data.text, encoding, rom.characterTable));
+    const flags = integer(data.flags ?? existing?.flags ?? 0x10,0,65535,'Dialogue flags');
     if (existing && existing.encoding === encoding && JSON.stringify(existing.tokens) === JSON.stringify(tokens) && ((flags ^ existing.flags) & ~3) === 0) continue;
+    const bytes = encodeLine(tokens, encoding, flags);
     if (!dialogue.has(target)) dialogue.set(target, new Map());
     dialogue.get(target).set(line, bytes);
     diffs.push({ kind: 'dialogue', target: key, action: existing ? 'replace' : 'add',
       before: existing ? { text: existing.preview, encoding: existing.encoding, flags: existing.flags, tokens: existing.tokens } : null,
-      after: { text: preview(tokens), encoding, flags: u16(bytes, 0), tokens } });
+      after: { text: preview(tokens,false,rom.characterTable), encoding, flags: u16(bytes, 0), tokens } });
   }
   for (const [key, page] of [...rom.pages, ...pages]) {
     const changed = dialogue.get(key);
@@ -325,7 +332,8 @@ function buildRom(rom, project, updateOpeningBanner) {
 export async function openRom(bytes) {
   if (bytes.length === PROFILE.size) {
     const rom = await openUSRom(bytes);
-    return { rom, project: newProject(rom) };
+    const project=newProject(rom);
+    return { rom:withCharacterTable(rom,project.characterTable), project };
   }
   check(bytes.length === PROFILE.maximumSize && eq(bytes.subarray(-footer.length), footer), 'This expanded ROM was not exported by this editor');
   const trailer = bytes.length - footer.length - 8;
@@ -342,7 +350,7 @@ export async function openRom(bytes) {
   const rom = await openUSRom(base);
   // Earlier exports still reproduce with the original banner pointer.
   check(eq(buildRom(rom, project, updatedOpeningBanner).bytes, bytes), 'Expanded ROM differs from its embedded project');
-  return { rom, project };
+  return { rom:withCharacterTable(rom,project.characterTable), project };
 }
 
 /** Identify a user-supplied cartridge without allocating or writing a patch. */
@@ -373,9 +381,12 @@ export function previewBuild(rom, project) {
 /** Merge explicit fields by resource key; validate the entire candidate before committing. */
 export function importProject(rom, current, incoming, mode = 'merge') {
   check(mode === 'merge' || mode === 'replace', 'Unknown import mode');
-  fields(incoming, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits', 'patches'], 'import');
+  fields(incoming, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits', 'patches', 'characterTable'], 'import');
   check(incoming.format === FORMAT && incoming.profile === rom.profile && incoming.baseSha256 === rom.sha256, 'Import base ROM/profile mismatch');
   const result = newProject(rom);
+  delete result.characterTable;
+  const mapping=Object.hasOwn(incoming,'characterTable')?incoming.characterTable:mode==='merge'?current.characterTable:defaultCharacterTable(rom)??undefined;
+  if(mapping!==undefined)result.characterTable=normalizeCharacterTable(mapping);
   for (const key of ['scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings']) {
     const entries = Object.fromEntries(collection(incoming[key] ?? {}, key));
     result[key] = mode === 'merge' ? { ...current[key], ...entries } : entries;

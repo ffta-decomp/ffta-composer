@@ -31,7 +31,7 @@ function sourceDialogue(commands, selector, occurrence) {
     command.operands.textSelector === selector)[occurrence - 1];
 }
 
-function compileBeats(recipe, addLine, anchor, commands, profile) {
+function compileBeats(recipe, addLine, anchor, commands, profile, characterTable) {
   const bindings = recipe.flags === undefined ? {} : recipe.flags;
   for (const [name, id] of entries(bindings, 'flag bindings')) {
     symbol(name, 'flag name');
@@ -94,7 +94,7 @@ function compileBeats(recipe, addLine, anchor, commands, profile) {
           check(typeof option.label === 'string' && option.label.trim() && option.label.length <= 11 &&
             !/[\r\n]/.test(option.label), 'A choice label must be one short line');
         }
-        const glyphs = text => plainTokens(text).slice(0, -2);
+        const glyphs = text => plainTokens(text,'standard',characterTable).slice(0, -2);
         const tokens = [
           ...glyphs(node.prompt), { kind: 'control', code: 0x4d, args: [] },
           { kind: 'control', code: 0x32, args: [0x10] },
@@ -183,7 +183,7 @@ export function lowerStoryEdits(rom, project) {
       const newLine = integer(line++, 0, 239, 'New story dialogue selector');
       effective.dialogue[lineKey(page, newLine)] = { ...lineData, flags: records[selector].flags };
       return newLine;
-    }, anchor.operands, original.commands, rom.profile);
+    }, anchor.operands, original.commands, rom.profile, project.characterTable);
     usesRuntime ||= compiled.usesRuntime;
     blocks.set(key, new Map([[anchor.offset, compiled.bytes]]));
     changes.push({ kind: 'story', target: name, action: 'add', before: null, after: recipe });

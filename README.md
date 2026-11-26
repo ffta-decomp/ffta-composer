@@ -22,6 +22,10 @@ ships one offline-capable HTML file and needs no game inputs for its build.
   by importing the [JSON](examples/herb-arrival.json) or [Lua](examples/herb-arrival.lua) project.
 - **Dialogue and script** edit text or native tokens, add dialogue pages, and
   inspect or edit known scene instructions.
+- **Character table selection** offers Original US, built-in US Chinese v1.1,
+  and custom JSON/CSV/TSV/TBL tables directly in the header. Recognized Chinese
+  ROMs select our Chinese table automatically. Labels and unmapped glyphs preserve native
+  tokens; the mapping travels with JSON/Lua projects. See [formats and acceptance](docs/character-tables.md).
 - **Changes and Agent data** review changes, save the project, and export
   a catalog, a diff, or an edited ROM.
 - **Battle event** previews a draft and exposes retail-only diagnostics.
@@ -41,6 +45,7 @@ and evidence boundaries. Nested-choice fixture: [JSON](examples/herb-ward.json) 
 | Input | Available tools |
 | --- | --- |
 | Verified 16 MiB US retail, game code `AFXE` | All tools |
+| Reviewed US Chinese v1.1 engine/layout with an external character table | Scene index, dialogue, script editing, and semantic preview |
 | 16 MiB US data mod that passes the native engine and scene layout checks | Scene index, dialogue, and script editing |
 | A ROM previously exported by this editor | Tools for its original input profile |
 | Engine hacks, relocated scene archives, or other game revisions | Identification and compatibility report |

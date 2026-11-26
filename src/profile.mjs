@@ -4,6 +4,7 @@ export const PROFILE = Object.freeze({
   id: 'ffta-us-retail',
   sha256: '43fc8204c6dceee58828aebc7af0c72eb807e99f35ad641c8bb0a4fa8b6edc19',
   compatibleId: 'ffta-us-layout',
+  chineseId: 'ffta-us-cn-layout',
   gameCode: 'AFXE',
   size: 0x1000000,
   maximumSize: 0x2000000,
@@ -19,6 +20,10 @@ export const US_LAYOUT_SIGNATURES = [
   [PROFILE.scripts.descriptors, PROFILE.scripts.descriptors + 0x72 * 6,
     '8a48d25ccfc6f9be94e2b3032628798e8e461aba5c8a4c6bcd46d11455bfd659'],
 ];
+
+// Pinned US Chinese v1.1 executable fingerprint; data edits still validate
+// against the original descriptor table and bounded resource topology.
+export const US_CN_ENGINE_SIGNATURE = '6988267fdc72989156d49cf2c7994ac29290ce02550219cc2cbbec8a300ff8b4';
 
 // Names describe observed operations. Operand meanings are exposed only where verified.
 const byte = key => ({ key, size: 1 });

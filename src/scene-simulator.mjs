@@ -4,7 +4,7 @@ import { check, integer } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
 import { DIRECTIONS, OPENING_CAST } from './opening.mjs';
 import { plan } from './project.mjs';
-import { decodeInstructions, pageKey, programKey } from './rom.mjs';
+import { decodeInstructions, pageKey, programKey, withCharacterTable } from './rom.mjs';
 import { toVmExpression } from './vm-instructions.mjs';
 import { preview as previewText } from './text.mjs';
 
@@ -17,6 +17,7 @@ const nodes = (list, prefix) => list.map((node, i) => ({...structuredClone(node)
 
 /** Deterministic semantic preview. It never writes ROM bytes, SAVs, or the project. */
 export function createSceneSimulation(rom, project, sceneId, options = {}) {
+  rom=withCharacterTable(rom,project.characterTable);
   integer(sceneId, 1, 239, 'Scene ID');
   const changes = plan(rom, project);
   const scene = changes.scenes.get(sceneId) ?? rom.scenes[sceneId];
@@ -52,7 +53,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   if (state.mapId === null) {
     if (opening || sceneId === 1) setMap(nativeMap(rom, openingRecord), 'opening');
     // Fixture-specific context, checked in a pinned-retail Herb Picking replay.
-    else if (sceneId === 14 && rom.profile === PROFILE.id) setMap(nativeMap(rom, 32), 'herb-picking');
+    else if (sceneId === 14 && [PROFILE.id,PROFILE.chineseId].includes(rom.profile)) setMap(nativeMap(rom, 32), 'herb-picking');
     else {
       const first = source?.commands.find(c => c.operation === 'loadSceneMap');
       if (first?.operands.map > 0) setMap(first.operands.map - 1, 'script');
@@ -199,8 +200,8 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
           if (token.kind === 'separator') groups.push([]);
           else groups.at(-1).push(token);
         }
-        state.choice = {prompt:previewText(line.tokens.slice(0,menuAt)).trimEnd(),
-          labels:[previewText(groups[0]),previewText(groups[1] ?? [])], path:`native.${offset}`, native:true};
+        state.choice = {prompt:previewText(line.tokens.slice(0,menuAt),false,rom.characterTable).trimEnd(),
+          labels:[previewText(groups[0],false,rom.characterTable),previewText(groups[1] ?? [],false,rom.characterTable)], path:`native.${offset}`, native:true};
         state.phase = 'choice'; state.dialogue = null;
       } else speak(line.text, displayActor(p.speakerHandle), `native.${offset}`);
     } else if (name === 'placeSceneActor') Object.assign(actor(p.actor), {x:p.tile & 15, y:p.tile >>> 4, facing:p.facing, visible:p.visibility !== 3});

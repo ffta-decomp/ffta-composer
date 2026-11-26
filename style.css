@@ -96,6 +96,8 @@ small, .muted { color: var(--muted); }
   border-left: 1px solid #526248;
 }
 .top-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+.character-table-control { display:flex; align-items:center; gap:6px; margin:0; font-size:12px; }
+.character-table-control select { max-width:190px; font-size:12px; }
 .top .accent, #welcome .accent {
   color: #233227;
   background: var(--brass);
@@ -470,13 +472,13 @@ dialog::backdrop { background: #101f17ac; }
   body:has(.inspector:not([hidden])) #detail-body { padding-bottom: min(65vh, 540px); }
 }
 @media (max-width: 620px) {
-  .top { padding: 9px 12px; gap: 8px; min-height: 57px; }
+  .top { padding: 9px 12px; gap: 8px; min-height: 57px; flex-wrap:wrap; }
   .brand { gap: 7px; }
   .brand-icon { width: 21px; height: 21px; }
   .brand-icon::before { width: 8px; height: 8px; }
   .brand strong { font-size: clamp(14px, 4.2vw, 19px); }
   .project-lamp { display: none; }
-  .top-actions { gap: 3px; }
+  .top-actions { gap: 3px; max-width:100%; flex-wrap:wrap; }
   .top-actions button, .top-actions summary { font-size: 12px; padding-inline: 6px; }
   #welcome { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 6px; min-height: calc(100dvh - 57px); padding: 14px 22px 26px; }
   .welcome-scene { max-width: 380px; justify-self: center; }

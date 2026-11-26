@@ -1,6 +1,7 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check, concat, hex, integer, put16, u16, view } from './binary.mjs';
+import { characterTableCodec } from './character-table.mjs';
 
 const kana = 'ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわをんァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヲンヴ、。ー';
 const glyphs = kana +
@@ -14,7 +15,7 @@ const controlSizes = new Map([
 const alternateControls = [4, 0x46, 0x4b, 0x45, 0x45, null, 0x53, 0x51,
   0x4d, 0x52, 0x42, 0x57, 0x54, 0x40, 0x4f, 0x41, 0x56, 0x4a, null, 0x1b, 0x1d, 0x58, 0];
 
-export function inflate(bytes, offset, size, limit) {
+export function inflate(bytes, offset, size, limit, details = {}) {
   integer(size, 1, 65536, 'Decompressed text size');
   const output = new Uint8Array(size);
   let cursor = offset;
@@ -56,10 +57,11 @@ export function inflate(bytes, offset, size, limit) {
       written++;
     }
   }
+  details.consumed = cursor - offset;
   return output;
 }
 
-export function decodeText(bytes, alternate) {
+export function decodeText(bytes, alternate, details = {}) {
   const tokens = [];
   let cursor = 0;
   let halfMode = false;
@@ -97,25 +99,34 @@ export function decodeText(bytes, alternate) {
       : { kind: 'control', code, args });
     if (!alternate && code === 0x32) separators = 2;
   }
+  details.consumed = cursor;
   return tokens;
 }
 
-export function readLine(bytes, start, end) {
+export function readLine(bytes, start, end, characterTable = null) {
   check(start + 2 <= end, 'Empty dialogue record');
   const flags = u16(bytes, start);
   const alternate = Boolean(flags & 1);
   const compressed = Boolean(flags & 2);
   check(!compressed || start + 6 <= end, 'Truncated dialogue header');
+  const packed = {}, decoded = {};
   const payload = compressed
-    ? inflate(bytes, start + 6, view(bytes).getUint32(start + 2), end)
+    ? inflate(bytes, start + 6, view(bytes).getUint32(start + 2), end, packed)
     : bytes.subarray(start + 2, end);
-  const tokens = decodeText(payload, alternate);
-  return { flags, encoding: alternate ? 'alternate' : 'standard', compressed, tokens, preview: preview(tokens) };
+  const tokens = decodeText(payload, alternate, decoded);
+  return { flags, encoding: alternate ? 'alternate' : 'standard', compressed, tokens,
+    storedLength: compressed ? 6 + packed.consumed : 2 + decoded.consumed,
+    preview: preview(tokens, false, characterTable) };
 }
 
-export function preview(tokens, withControls = false) {
+export function preview(tokens, withControls = false, characterTable = null) {
+  const codec = characterTableCodec(characterTable);
   return tokens.map(token => {
-    if (token.kind === 'glyph') return glyphs[token.code] ?? `⟨${hex(token.code, 4)}⟩`;
+    if (token.kind === 'glyph') {
+      const width = token.width ?? 'full';
+      const label = codec?.hasWidth(width) ? codec.label(width, token.code) : glyphs[token.code];
+      return label ?? `⟨${hex(token.code, 4)}⟩`;
+    }
     if (token.kind === 'separator') return ' / ';
     if (token.code === 0x52) return ' ';
     if (token.code === 0x4d) return '\n';
@@ -129,9 +140,25 @@ export function controlLabel(code) {
   return ({ 0x52: '空格', 0x4d: '换行', 0x32: '双字符串' })[code] ?? `控制码 ${hex(code)}`;
 }
 
-export function plainTokens(text, encoding = 'standard') {
+export function plainTokens(text, encoding = 'standard', characterTable = null) {
   check(typeof text === 'string', 'Dialogue text must be a string');
   const substitutions = { "'": '’', '"': '”', '　': ' ' };
+  const codec = characterTableCodec(characterTable), width = encoding === 'standard' ? 'full' : 'half';
+  if(codec?.hasWidth(width)) {
+    const source=text.replace(/\r\n?/g,'\n'), tokens=[];
+    for(let at=0;at<source.length;) {
+      if(source[at]==='\n'){tokens.push({kind:'control',code:0x4d,args:[]});at++;continue;}
+      const hit=codec.match(source,at,width);
+      if(hit){const {length,...token}=hit;tokens.push(token);at+=length;continue;}
+      const char=String.fromCodePoint(source.codePointAt(at)), substitute=substitutions[char];
+      const alias=substitute?codec.match(substitute,0,width):null;
+      if(alias&&alias.length===substitute.length){const {length,...token}=alias;tokens.push(token);}
+      else if(char===' '||char==='　')tokens.push({kind:'control',code:0x52,args:[]});
+      else check(false,`Glyph unavailable in character table ${JSON.stringify(characterTable.name)}: ${JSON.stringify(char)}`);
+      at+=char.length;
+    }
+    return [...tokens,{kind:'control',code:0x40,args:[]},{kind:'control',code:0x42,args:[]}];
+  }
   const tokens = Array.from(text.replace(/\r\n?/g, '\n'), original => {
     const char = substitutions[original] ?? original;
     if (char === ' ') return { kind: 'control', code: 0x52, args: [] };
@@ -144,7 +171,7 @@ export function plainTokens(text, encoding = 'standard') {
   return [...tokens, { kind: 'control', code: 0x40, args: [] }, { kind: 'control', code: 0x42, args: [] }];
 }
 
-export function dialogueTextRuns(tokens, encoding) {
+export function dialogueTextRuns(tokens, encoding, characterTable = null) {
   const runs = [];
   for (const token of tokens) {
     const editable = token.kind === 'glyph' ||
@@ -154,10 +181,10 @@ export function dialogueTextRuns(tokens, encoding) {
     else runs.push({ editable, tokens: [token] });
   }
   return runs.map(run => {
-    const text = preview(run.tokens);
+    const text = preview(run.tokens, false, characterTable);
     if (run.editable) {
       try {
-        const encoded = plainTokens(text, encoding).slice(0, -2);
+        const encoded = plainTokens(text, encoding, characterTable).slice(0, -2);
         if (JSON.stringify(encoded) === JSON.stringify(run.tokens)) return { ...run, text };
       } catch {
         // An unmapped glyph can still be preserved or edited as a native token.
@@ -167,9 +194,9 @@ export function dialogueTextRuns(tokens, encoding) {
   });
 }
 
-export function editDialogueRuns(runs, values, encoding) {
+export function editDialogueRuns(runs, values, encoding, characterTable = null) {
   return runs.flatMap((run, index) => run.editable && values[index] !== run.text
-    ? plainTokens(values[index], encoding).slice(0, -2)
+    ? plainTokens(values[index], encoding, characterTable).slice(0, -2)
     : run.tokens);
 }
 

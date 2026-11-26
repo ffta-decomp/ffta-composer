@@ -82,7 +82,7 @@ Map directory IDs shown in the preview are zero-based. Native scene/save map
 values are one-based: retail initializer0801a100 subtracts1. The opening resolves
 content record30, map value1, to directory0. A replay of the supplied Herb Picking
 fixture confirms content32, save map value71, resource index70. This default
-context is limited to pinned retail scene14; arbitrary inherited map contexts
+context is verified for retail and reviewed US Chinese scene14 fixtures; arbitrary inherited map contexts
 require an explicit map selection. An explicit native map operand also subtracts1.
 
 Maps are static compositions of original tiles, palettes, flips, and arrangement

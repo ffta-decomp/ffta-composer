@@ -2,7 +2,9 @@
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { check, hex } from './binary.mjs';
 import { PROFILE } from './profile.mjs';
-import { catalog, lineKey, pageKey, programKey } from './rom.mjs';
+import { catalog, lineKey, pageKey, programKey, withCharacterTable } from './rom.mjs';
+import { parseCharacterTable, characterTableCodec } from './character-table.mjs';
+import {CHARACTER_TABLE_PRESETS,presetCharacterTable,characterTablePresetId,defaultCharacterTable} from './character-table-presets.mjs';
 import { BATTLE_SCENE } from './battle.mjs';
 import { buildBattleListenerProbe } from './battle-probes.mjs';
 import { build, importProject, inspectRom, openRom, plan, previewBuild } from './project.mjs';
@@ -32,6 +34,7 @@ const keySort = (a, b) => a.localeCompare(b, 'en', { numeric: true });
 
 function update(project) {
   state.plan = plan(state.rom, project);
+  state.rom = withCharacterTable(state.rom, project.characterTable);
   state.project = project;
   const ids = new Set([...state.rom.scenes.map(scene => scene.id), ...state.plan.scenes.keys()]);
   state.scenes = Array.from(ids, id => state.plan.scenes.get(id) ?? state.rom.scenes[id])
@@ -165,6 +168,7 @@ function render() {
   renderedPanel?.dispose?.();
   renderedPanel = null;
   const ready = Boolean(state.rom);
+  fillCharacterTableSelect($('#character-table-select'));
   $('#welcome').hidden = ready;
   $('#rom-name').hidden = !ready;
   $('#workspace').hidden = !ready;
@@ -610,6 +614,7 @@ function clonePage(scene, address) {
 
 function editDialogue(address, index, actions = []) {
   const record = pageRecords(address)[index];
+  if(record?.opaque){notice(t('此原生记录尚未解析，保留原始字节且不可编辑。'));return;}
   const key = lineKey(address, index);
   const mode = el('select');
   const modes = record?.tokens ? [['safe', '保留控制码'], ['text', '替换为纯文本'], ['tokens', '结构化 token']]
@@ -633,7 +638,7 @@ function editDialogue(address, index, actions = []) {
   native.append(el('summary', t('格式与控制码')), field(t('编辑方式'), mode),
     tokens.label, field(t('编码'), encoding), flags.label);
   const storyText = el('div', undefined, 'inspect-dialogue');
-  const runs = dialogueTextRuns(record?.tokens ?? [], encoding.value);
+  const runs = dialogueTextRuns(record?.tokens ?? [], encoding.value, state.project.characterTable);
   const inputs = runs.map((run, i) => {
     if (run.editable) {
       const rows = Math.min(6, Math.max(2, run.text.split('\n').length));
@@ -667,7 +672,7 @@ function editDialogue(address, index, actions = []) {
   inspector.open(t('编辑对白'), [storyText, content.label, native, extras], () => {
     const data = mode.value === 'tokens' ? { tokens: JSON.parse(tokens.input.value) }
       : mode.value === 'text' ? { text: content.input.value }
-        : { tokens: editDialogueRuns(runs, inputs.map(input => input?.value), encoding.value) };
+        : { tokens: editDialogueRuns(runs, inputs.map(input => input?.value), encoding.value, state.project.characterTable) };
     if (record && serialize(data.tokens) === serialize(record.tokens) &&
       encoding.value === record.encoding && flags.input.valueAsNumber === record.flags) return;
     editCollection('dialogue', key, { ...data, encoding: encoding.value, flags: flags.input.valueAsNumber });
@@ -744,6 +749,60 @@ $('#project-file').onchange = handle(async event => {
   const file = event.target.files[0];
   event.target.value = '';
   if (file) importDialog(parseProjectText(await file.text()));
+});
+function loadCharacterTable(source,name) {
+  check(state.rom,t('请先打开 ROM'));
+  const characterTable=parseCharacterTable(source,name);
+  commit({...state.project,characterTable});
+  return characterTableCodec(characterTable).summary();
+}
+function fillCharacterTableSelect(select) {
+  const id=characterTablePresetId(state.project?.characterTable);
+  const labels={'us-retail':'原版美版','us-cn-v1.1':'美版汉化 v1.1'};
+  const choices=CHARACTER_TABLE_PRESETS.map(p=>({id:p.id,label:t(labels[p.id])}));
+  if(id==='custom')choices.push({id:'custom',label:`${t('自定义字表')} · ${state.project.characterTable.name}`});
+  choices.push({id:'import',label:t('导入自定义字表…')});
+  select.replaceChildren(...choices.map(choice=>{
+    const option=el('option',choice.label);option.value=choice.id;return option;
+  }));
+  select.value=id;select.disabled=!state.rom;select.setAttribute('aria-label',t('字表选择'));
+}
+function selectCharacterTable(id) {
+  check(state.rom,t('请先打开 ROM'));
+  const characterTable=presetCharacterTable(id);
+  try {commit({...state.project,characterTable});}
+  finally {fillCharacterTableSelect($('#character-table-select'));}
+  return characterTable?characterTableCodec(characterTable).summary():null;
+}
+function bindCharacterTableSelect(select,refreshDialog=false) {
+  select.onchange=handle(()=>{
+    const id=select.value;
+    if(id==='import'){$('#character-table-file').click();fillCharacterTableSelect(select);return;}
+    if(id==='custom')return;
+    try {selectCharacterTable(id);if(refreshDialog)showCharacterTable();}
+    finally {fillCharacterTableSelect(select);}
+  });
+}
+bindCharacterTableSelect($('#character-table-select'));
+function showCharacterTable() {
+  const table=state.project.characterTable;
+  const summary=table?characterTableCodec(table).summary():null;
+  const select=el('select');fillCharacterTableSelect(select);bindCharacterTableSelect(select,true);
+  dialog(t('字表'),[
+    field(t('字表选择'),select),
+    el('p',summary?`${summary.name} · ${summary.labelled}/${summary.entries} · ${summary.aliases} ${t('重复字符别名')}`:t('原版美版')),
+    el('p',t('字表只改变文字映射，不会安装字体。字表会随项目保存。'),'note'),
+    button(t('导入字表'),()=>$('#character-table-file').click()),
+    ...(table?[
+      button(t('导出字表'),()=>downloadJson('ffta.character-table.json',table)),
+      button(t('恢复默认字表'),handle(()=>{commit({...state.project,characterTable:defaultCharacterTable(state.rom)});showCharacterTable();})),
+    ]:[]),
+  ],null);
+}
+$('#character-table').onclick=showCharacterTable;
+$('#character-table-file').onchange=handle(async event=>{
+  const file=event.target.files[0];event.target.value='';
+  if(file){loadCharacterTable(await file.text(),file.name);showCharacterTable();}
 });
 $('#search').oninput = event => { state.query = event.target.value; renderList(); };
 $('#filter').onchange = event => { state.filter = event.target.value; renderList(); };
@@ -842,6 +901,10 @@ window.fftaSceneEditor = Object.freeze({
     return structuredClone(describeStory(state.rom, state.plan, id, variant));
   },
   getProject() { check(state.rom, 'Open a ROM first'); return structuredClone(state.project); },
+  loadCharacterTable(source,name) { return structuredClone(loadCharacterTable(source,name)); },
+  getCharacterTable() { return structuredClone(state.project?.characterTable ?? null); },
+  getCharacterTablePresets() { return structuredClone(CHARACTER_TABLE_PRESETS); },
+  selectCharacterTable(id) { return structuredClone(selectCharacterTable(id)); },
   getSimulation() { return panels.get('simulation').getSnapshot(); },
   exportProject(format = 'json') {
     check(state.rom, 'Open a ROM first');

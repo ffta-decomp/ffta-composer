@@ -1,6 +1,14 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '字表':'Character table', '导入字表':'Import character table', '导出字表':'Export character table',
+  '恢复默认字表':'Restore default character table', '默认美版字表':'Default US character table',
+  '字表选择':'Character table selection','原版美版':'Original US','美版汉化 v1.1':'US Chinese v1.1',
+  '自定义字表':'Custom character table','导入自定义字表…':'Import custom character table…',
+  '重复字符别名':'duplicate labels', '请先打开 ROM':'Open a ROM first',
+  '字表只改变文字映射，不会安装字体。字表会随项目保存。':'Character tables map text; they do not install fonts. The table is saved with your project.',
+  '此原生记录尚未解析，保留原始字节且不可编辑。':'This native record is unparsed. Its original bytes are preserved and read-only.',
+  '已识别汉化布局，请在“项目 → 字表”导入字表。':'Chinese layout recognized. Import its character table through Project → Character table.',
   '实时模拟': 'Simulation',
   '播放': 'Play', '暂停': 'Pause', '下一步': 'Next', '重新开始': 'Restart',
   '播放速度': 'Playback speed', '速度': 'Speed', '预览地图': 'Preview map', '地图': 'Map',
