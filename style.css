@@ -532,6 +532,9 @@ dialog::backdrop { background: #101f17ac; }
 .simulation-dialogue p { margin:5px 0 0; white-space:pre-wrap; line-height:1.45; color:#263e33; }
 .simulation-choices { position:absolute; display:flex; gap:10px; left:8%; right:8%; bottom:2%; justify-content:center; }
 .simulation-choices:empty { display:none; }
+.simulation-name-entry { position:absolute; left:8%; right:8%; bottom:6%; padding:18px; background:#f5edc8; border:2px solid #5c6945; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.simulation-name-entry[hidden] { display:none; }
+.simulation-name-error { color:#9a302b; flex-basis:100%; }
 .simulation-message { position:absolute; top:12px; left:12px; right:12px; padding:10px 13px; background:#f5edc8ed; border-radius:5px; font-size:.87rem; }
 .simulation-flow { padding-left:15px; border-left:1px solid var(--line); min-width:0; }
 .simulation-flow h2 { margin:0 0 12px; font-size:1rem; }

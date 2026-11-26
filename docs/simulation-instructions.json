@@ -2,8 +2,8 @@
   "format": "ffta.simulation-instructions/v1",
   "counts": {
     "core": 36,
-    "model": 56,
-    "external": 22
+    "model": 57,
+    "external": 21
   },
   "instructions": [
     {
@@ -345,7 +345,7 @@
     {
       "opcode": 56,
       "operation": "sceneOp38",
-      "handling": "external",
+      "handling": "model",
       "description": "Pack selector, signed 16-bit value, mode, and amount for 08127c54. The final height/action meaning remains unresolved."
     },
     {

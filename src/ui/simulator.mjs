@@ -8,9 +8,12 @@ import { button, el, field } from './controls.mjs';
 import {speakerLabel} from './speaker.mjs';
 
 const readable = name => name.replace(/([a-z])([A-Z])/g, '$1 $2');
-const phaseLabels = {ready: '准备', dialogue: '对白', choice: '选择', motion: '移动', camera:'镜头移动',waiting: '等待',
+const phaseLabels = {ready: '准备', dialogue: '对白', choice: '选择', motion: '移动',height:'角色动作',input:'输入姓名',camera:'镜头移动',waiting: '等待',
   unsupported: '需要确认', external:'等待游戏上下文',battle: '战斗入口', done: '播放结束'};
 const traceLabels = {say:'对白', walk:'移动', face:'转身', if:'分支', choose:'选择', choice:'选择',
+  sceneOp38:'角色高度移动',loadEncounterUnits:'载入登场角色',selectSceneEncounter:'选择场景配置',
+  runActorPath:'沿路径移动',runActorCoordinatePath:'沿坐标路径移动',transitionSceneState:'场景流程',
+  'name-entry':'角色命名',
   enemyHp:'跳过战斗步骤', battle:'战斗入口', resume:'继续原流程', cancel:'原生取消', 'skip-unsupported':'手动跳过'};
 
 export function createSimulatorPanel({getRom, getProject}) {
@@ -78,9 +81,18 @@ export function createSimulatorPanel({getRom, getProject}) {
     const portrait=el('canvas');portrait.width=portrait.height=64;portrait.className='simulation-speaker-pose';portrait.setAttribute('role','img');
     const speaker=el('strong'),speech=el('p');speech.setAttribute('aria-live','polite');box.append(portrait,speaker,speech);
     const choices=el('div',undefined,'simulation-choices');
+    const nameForm=el('div',undefined,'simulation-name-entry');
+    const nameInput=el('input');nameInput.type='text';nameInput.maxLength=8;nameInput.setAttribute('aria-label',t('角色姓名'));
+    const nameError=el('span',undefined,'simulation-name-error');nameError.setAttribute('role','alert');
+    const submitName=()=>{
+      try{model.confirmName(nameInput.value);nameError.textContent='';held=0;refresh();schedule();}
+      catch(error){nameError.textContent=error.message;}
+    };
+    nameInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();submitName();}});
+    nameForm.append(el('label',t('输入角色姓名')),nameInput,button(t('确认姓名'),submitName),nameError);nameForm.hidden=true;
     const cancel=button(t('原生取消'),()=>{model.cancel();held=0;refresh();schedule();});
     const skip=button(t('跳过未模拟指令'),()=>{model.skip();held=0;refresh();});
-    stage.append(canvas,box,choices,message);
+    stage.append(canvas,box,choices,nameForm,message);
     const side=el('aside',undefined,'simulation-flow');
     side.append(el('h2',t('执行流程')));
     const traceList=el('ol');traceList.setAttribute('aria-label',t('执行流程'));
@@ -144,8 +156,8 @@ export function createSimulatorPanel({getRom, getProject}) {
       const s=model.snapshot();draw(s);
       zoomSelect.value=String(zoom);
       play.textContent=t(playing?'暂停':'播放');
-      play.disabled=['done','battle','unsupported','external'].includes(s.phase);
-      next.disabled=['choice','done','battle','unsupported','external'].includes(s.phase);
+      play.disabled=['done','battle','unsupported','external','input'].includes(s.phase);
+      next.disabled=['choice','done','battle','unsupported','external','input'].includes(s.phase);
       status.textContent=t(phaseLabels[s.phase]);
       message.hidden=false;
       if(s.phase==='external')message.textContent=`${t(s.external.kind==='condition'?'请指定条件结果':'此外部步骤尚未复现，请确认预览继续')} · ${readable(s.external.operation)}`;
@@ -156,6 +168,8 @@ export function createSimulatorPanel({getRom, getProject}) {
       else if(s.phase==='done')message.textContent=t(s.message==='external-handoff'?'已到外部流程入口，预览在此结束。':s.message==='resume-original'?'已接回原对白；后续原生流程未执行。':'场景播放结束。');
       else message.hidden=true;
       box.hidden=!s.dialogue&&!s.choice;
+      if(s.phase==='input'&&nameForm.hidden){nameInput.value=s.input.value;nameError.textContent='';nameForm.hidden=false;nameInput.focus();}
+      else if(s.phase!=='input')nameForm.hidden=true;
       speaker.textContent=speakerLabel(s.dialogue?.speakerInfo??s.choice?.speakerInfo);
       const info=s.dialogue?.speakerInfo??s.choice?.speakerInfo,pose=info?sprite(info.handle):null;
       portrait.hidden=!pose;
@@ -201,13 +215,20 @@ export function createSimulatorPanel({getRom, getProject}) {
       frame=0;if(!playing||!model)return;
       const dt=last?Math.min(time-last,100):0;last=time;
       const s=model.snapshot(),rate=Number(speed.value);held+=dt*rate;lastAction+=dt*rate;
-      if(['motion','camera','waiting'].includes(s.phase))model.tick(dt*rate);
+      if(['motion','height','camera','waiting'].includes(s.phase))model.tick(dt*rate);
       else if(s.phase==='dialogue'){
         if(held>Math.min(6000,Math.max(1800,(s.dialogue?.text.length??0)*35))){model.confirm();held=0;}
-      }else if(s.phase==='ready'&&lastAction>=450){model.step();lastAction=0;held=0;}
+      }else if(s.phase==='ready'){
+        if(s.mode==='native'){
+          // Immediate setup/control opcodes do not each consume an artificial
+          // 450 ms pause. Yield on visible actions/input and cap work per frame.
+          for(let budget=0;budget<32&&model.snapshot().phase==='ready';budget++)model.step();
+          lastAction=0;held=0;
+        }else if(lastAction>=450){model.step();lastAction=0;held=0;}
+      }
       if(['done','battle','unsupported','external'].includes(model.snapshot().phase))stop();
       refresh();
-      if(model.snapshot().phase!=='choice')schedule();
+      if(!['choice','input'].includes(model.snapshot().phase))schedule();
       else last=0;
     }
     stage.addEventListener('keydown',event=>{
