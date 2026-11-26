@@ -2,11 +2,13 @@
 // FFTA Composer — see LICENSE and NOTICE for reuse and attribution.
 import { t, tr } from '../i18n.mjs';
 import { decodeMapPreview, MAP_DIRECTORY } from '../map-preview.mjs';
-import { createSceneSimulation } from '../scene-simulator.mjs';
+import { createSceneSimulation,projectActorPosition } from '../scene-simulator.mjs';
+import {decodeActorPreview} from '../actor-preview.mjs';
 import { button, el, field } from './controls.mjs';
+import {speakerLabel} from './speaker.mjs';
 
 const readable = name => name.replace(/([a-z])([A-Z])/g, '$1 $2');
-const phaseLabels = {ready: '准备', dialogue: '对白', choice: '选择', motion: '移动', waiting: '等待',
+const phaseLabels = {ready: '准备', dialogue: '对白', choice: '选择', motion: '移动', camera:'镜头移动',waiting: '等待',
   unsupported: '需要确认', battle: '战斗入口', done: '播放结束'};
 const traceLabels = {say:'对白', walk:'移动', face:'转身', if:'分支', choose:'选择', choice:'选择',
   enemyHp:'跳过战斗步骤', battle:'战斗入口', resume:'继续原流程', cancel:'原生取消', 'skip-unsupported':'手动跳过'};
@@ -48,6 +50,18 @@ export function createSimulatorPanel({getRom, getProject}) {
       model.setMap(Number(mapSelect.value));mapChoices.set(`${rom.sha256}:${scene.id}`,Number(mapSelect.value));refresh();
     };
     const context=el('div',undefined,'simulation-context');context.append(field(t('地图'),mapSelect));
+    let viewCenter=null,zoom=1;
+    const overview=button(t('全图'),()=>{viewCenter={x:256,y:256};zoom=1;refresh();});
+    const scripted=button(t('跟随脚本镜头'),()=>{viewCenter=null;zoom=2;refresh();});
+    const focusSpeaker=button(t('定位说话者'),()=>{
+      const s=model.snapshot(),handle=(s.dialogue?.speakerInfo??s.choice?.speakerInfo)?.handle;
+      const item=s.actors.find(a=>a.id===handle);
+      if(item){viewCenter=projectActorPosition(item);zoom=2;refresh();}
+    });
+    const zoomSelect=el('select');zoomSelect.setAttribute('aria-label',t('缩放'));
+    for(const value of[1,2,3,4]){const option=el('option',`${value}×`);option.value=value;zoomSelect.append(option);}
+    zoomSelect.onchange=()=>{zoom=Number(zoomSelect.value);refresh();};
+    context.append(overview,scripted,focusSpeaker,field(t('缩放'),zoomSelect));
     const initialFlags={};
     const bindings = Object.values(project.storyEdits??{}).find(r=>r.trigger.scene===scene.id)?.flags ?? {};
     for(const [name,id] of Object.entries(bindings)) {
@@ -58,10 +72,11 @@ export function createSimulatorPanel({getRom, getProject}) {
     const layout=el('div',undefined,'simulation-layout');
     const stage=el('div',undefined,'simulation-stage');stage.tabIndex=0;stage.setAttribute('aria-label',t('场景模拟画面'));
     const canvas=el('canvas');canvas.width=canvas.height=512;canvas.setAttribute('aria-label',t('本地 ROM 地图'));canvas.setAttribute('role','img');
-    const sceneNote=el('p',t('地图来自本地 ROM；角色位置使用示意标记。'),'simulation-note');
+    const sceneNote=el('p',t('地图与静态角色来自本地 ROM；未绑定角色显示编号标记。拖动画面移动镜头。'),'simulation-note');
     const message=el('p',undefined,'simulation-message');message.setAttribute('role','status');
     const box=el('div',undefined,'simulation-dialogue');
-    const speaker=el('strong'),speech=el('p');speech.setAttribute('aria-live','polite');box.append(speaker,speech);
+    const portrait=el('canvas');portrait.width=portrait.height=64;portrait.className='simulation-speaker-pose';portrait.setAttribute('role','img');
+    const speaker=el('strong'),speech=el('p');speech.setAttribute('aria-live','polite');box.append(portrait,speaker,speech);
     const choices=el('div',undefined,'simulation-choices');
     const cancel=button(t('原生取消'),()=>{model.cancel();held=0;refresh();schedule();});
     const skip=button(t('跳过未模拟指令'),()=>{model.skip();held=0;refresh();});
@@ -74,7 +89,23 @@ export function createSimulatorPanel({getRom, getProject}) {
     side.append(traceList,el('h3',t('接下来')),upcoming,el('h3',t('登场角色')),cast);
     layout.append(stage,side);body.append(toolbar,context,layout,sceneNote,skip,cancel);
     let bitmap=null,mapError=null,loadedMap=undefined,last=0,held=0,lastAction=0,choiceKey='';
-    const ctx=canvas.getContext('2d');
+    const ctx=canvas.getContext('2d'),spriteCache=new Map();
+    function sprite(id,facing=0) {
+      const key=`${id}:${facing&3}`;
+      if(!spriteCache.has(key)) {
+        try {
+          const pose=decodeActorPreview(rom,id,{facing:facing&3}),image=document.createElement('canvas');
+          image.width=pose.width;image.height=pose.height;
+          image.getContext('2d').putImageData(new ImageData(pose.pixels,pose.width,pose.height),0,0);
+          spriteCache.set(key,{...pose,canvas:image});
+        }catch{spriteCache.set(key,null);}
+      }
+      return spriteCache.get(key);
+    }
+    function drawPose(context,pose,x,y,scale=1) {
+      context.save();context.translate(x,y);context.scale(pose.mirror?-scale:scale,scale);
+      context.drawImage(pose.canvas,pose.left,pose.top);context.restore();
+    }
     function draw(snapshot) {
       if(loadedMap!==snapshot.mapId){
         loadedMap=snapshot.mapId;bitmap=null;mapError=null;
@@ -88,20 +119,29 @@ export function createSimulatorPanel({getRom, getProject}) {
       }
       ctx.clearRect(0,0,512,512);
       if(!bitmap)return;
-      const bounds=bitmap.bounds;
+      const center=viewCenter??snapshot.camera;
+      ctx.save();ctx.translate(256,256);ctx.scale(zoom,zoom);ctx.translate(-center.x,-center.y);
       ctx.imageSmoothingEnabled=false;ctx.drawImage(bitmap.canvas,0,0);
-      const originX=bounds.x+bounds.width/2,originY=bounds.y+bounds.height*0.40;
       for(const actor of [...snapshot.actors].filter(a=>a.visible).sort((a,b)=>a.x+a.y-b.x-b.y)){
-        const x=originX+(actor.x-actor.y)*16,y=originY+(actor.x+actor.y)*8;
-        ctx.fillStyle=actor.id>=128?'#a34237':'#1a655b';ctx.strokeStyle='#fff5d8';ctx.lineWidth=2;
-        ctx.beginPath();ctx.moveTo(x,y-10);ctx.lineTo(x+7,y-3);ctx.lineTo(x,y+4);ctx.lineTo(x-7,y-3);ctx.closePath();ctx.fill();ctx.stroke();
+        const {x,y}=projectActorPosition(actor),pose=sprite(actor.id,actor.facing);
+        const speaking=actor.id===(snapshot.dialogue?.speakerInfo??snapshot.choice?.speakerInfo)?.handle;
+        ctx.fillStyle=actor.id>=128?'#a34237':'#1a655b';ctx.strokeStyle=speaking?'#ffd65c':'#fff5d8';ctx.lineWidth=speaking?4:2;
+        if(pose){
+          if(speaking){ctx.beginPath();ctx.ellipse(x,y,12,6,0,0,Math.PI*2);ctx.stroke();}
+          drawPose(ctx,pose,x,y);
+        }else{
+          ctx.beginPath();ctx.moveTo(x,y-10);ctx.lineTo(x+7,y-3);ctx.lineTo(x,y+4);ctx.lineTo(x-7,y-3);ctx.closePath();ctx.fill();ctx.stroke();
+        }
         const direction=[[-9,4],[-9,-4],[9,-4],[9,4]][actor.facing&3];
         ctx.beginPath();ctx.moveTo(x,y-3);ctx.lineTo(x+direction[0],y-3+direction[1]);ctx.stroke();
-        ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#102e29';ctx.strokeText(actor.name,x,y-17);ctx.fillStyle='#fff6d9';ctx.fillText(actor.name,x,y-17);
+        const labelY=y+(pose?.top??-12)-5;
+        ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#102e29';ctx.strokeText(actor.name,x,labelY);ctx.fillStyle='#fff6d9';ctx.fillText(actor.name,x,labelY);
       }
+      ctx.restore();
     }
     function refresh() {
       const s=model.snapshot();draw(s);
+      zoomSelect.value=String(zoom);
       play.textContent=t(playing?'暂停':'播放');
       play.disabled=['done','battle','unsupported'].includes(s.phase);
       next.disabled=['choice','done','battle','unsupported'].includes(s.phase);
@@ -114,7 +154,15 @@ export function createSimulatorPanel({getRom, getProject}) {
       else if(s.phase==='done')message.textContent=t(s.message==='resume-original'?'已接回原对白；后续原生流程未执行。':'场景播放结束。');
       else message.hidden=true;
       box.hidden=!s.dialogue&&!s.choice;
-      speaker.textContent=s.dialogue?.speaker??'';
+      speaker.textContent=speakerLabel(s.dialogue?.speakerInfo??s.choice?.speakerInfo);
+      const info=s.dialogue?.speakerInfo??s.choice?.speakerInfo,pose=info?sprite(info.handle):null;
+      portrait.hidden=!pose;
+      if(pose){
+        const pc=portrait.getContext('2d');pc.clearRect(0,0,64,64);pc.imageSmoothingEnabled=false;
+        drawPose(pc,pose,32-(pose.left+pose.width/2)*2,60-(pose.top+pose.height)*2,2);
+        portrait.setAttribute('aria-label',speakerLabel(info));
+      }
+      focusSpeaker.disabled=!s.actors.some(a=>a.id===info?.handle);
       speech.textContent=s.dialogue?.text??s.choice?.prompt??'';
       const key=JSON.stringify(s.choice);
       if(key!==choiceKey){
@@ -133,7 +181,11 @@ export function createSimulatorPanel({getRom, getProject}) {
         row.dataset.path=entry.path??'';return row;
       }));
       upcoming.replaceChildren(...s.queue.slice(0,5).map(entry=>el('li',t(traceLabels[entry.type]??entry.type))));
-      cast.replaceChildren(...s.actors.filter(a=>a.visible).map(a=>el('span',`${a.name} · ${Math.round(a.x)}, ${Math.round(a.y)}`)));
+      cast.replaceChildren(...s.actors.filter(a=>a.visible).map(a=>{
+        const row=el('span',`${speakerLabel(a.identity)} · ${Math.round(a.x)}, ${Math.round(a.y)}`);
+        if(a.id===(s.dialogue?.speakerInfo??s.choice?.speakerInfo)?.handle){row.classList.add('speaking');row.setAttribute('aria-current','true');}
+        return row;
+      }));
       canvas.setAttribute('aria-label',s.mapId===null?t('尚未选择地图'):tr`地图 ${s.mapId}`);
     }
     function schedule(){if(playing&&!frame)frame=requestAnimationFrame(onFrame);}
@@ -141,7 +193,7 @@ export function createSimulatorPanel({getRom, getProject}) {
       frame=0;if(!playing||!model)return;
       const dt=last?Math.min(time-last,100):0;last=time;
       const s=model.snapshot(),rate=Number(speed.value);held+=dt*rate;lastAction+=dt*rate;
-      if(s.phase==='motion'||s.phase==='waiting')model.tick(dt*rate);
+      if(['motion','camera','waiting'].includes(s.phase))model.tick(dt*rate);
       else if(s.phase==='dialogue'){
         if(held>Math.min(6000,Math.max(1800,(s.dialogue?.text.length??0)*35))){model.confirm();held=0;}
       }else if(s.phase==='ready'&&lastAction>=450){model.step();lastAction=0;held=0;}
@@ -159,6 +211,18 @@ export function createSimulatorPanel({getRom, getProject}) {
         held=0;refresh();schedule();
       }
     });
+    let drag=null;
+    canvas.addEventListener('pointerdown',event=>{
+      const center=viewCenter??model.snapshot().camera;
+      drag={id:event.pointerId,x:event.clientX,y:event.clientY,center:{x:center.x,y:center.y}};
+      canvas.setPointerCapture(event.pointerId);
+    });
+    canvas.addEventListener('pointermove',event=>{
+      if(!drag||drag.id!==event.pointerId)return;
+      const rect=canvas.getBoundingClientRect();if(!rect.width||!rect.height)return;
+      viewCenter={x:drag.center.x-(event.clientX-drag.x)*512/rect.width/zoom,y:drag.center.y-(event.clientY-drag.y)*512/rect.height/zoom};refresh();
+    });
+    for(const name of['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,()=>{drag=null;});
     session={snapshot:()=>model.snapshot()};refresh();
   }
   return {id:'simulation',label:'实时模拟',render,dispose,getSnapshot:()=>session?.snapshot()??null};

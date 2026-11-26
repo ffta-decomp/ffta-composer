@@ -7,16 +7,17 @@ import { plan } from './project.mjs';
 import { decodeInstructions, pageKey, programKey, withCharacterTable } from './rom.mjs';
 import { toVmExpression } from './vm-instructions.mjs';
 import { preview as previewText } from './text.mjs';
+import {describeSceneActor} from './scene-actors.mjs';
 
-const ACTOR_NAMES = {2: 'Marche', 8: 'Montblanc', 15: 'Marche', 16: 'Mewt', 17: 'Ritz',
-  23: 'Teacher', 76: 'Student', 128: 'Red Cap', 129: 'Goblin 1', 130: 'Goblin 2', 131: 'Goblin 3'};
-const displayActor = id => ACTOR_NAMES[id] ?? `Actor ${id}`;
 // Native scene/save map values are one-based; the map directory is zero-based.
 const nativeMap = (rom, record) => rom.bytes[0x54cd54 + record * 40 + 2] - 1;
 const nodes = (list, prefix) => list.map((node, i) => ({...structuredClone(node), path: `${prefix}.${i}`}));
+export const projectActorPosition = actor => ({x:256+(actor.x-actor.y)*16,y:256+(actor.x+actor.y+1)*8});
 
 /** Deterministic semantic preview. It never writes ROM bytes, SAVs, or the project. */
 export function createSceneSimulation(rom, project, sceneId, options = {}) {
+  const actorInfo = id => describeSceneActor(id,sceneId,Boolean(opening));
+  const displayActor = id => actorInfo(id).label;
   rom=withCharacterTable(rom,project.characterTable);
   integer(sceneId, 1, 239, 'Scene ID');
   const changes = plan(rom, project);
@@ -29,7 +30,8 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   const state = {format: 'ffta.scene-simulation/v1', scene: sceneId, mode: opening ? 'opening' : recipe ? 'fragment' : 'native',
     phase: 'ready', mapId: options.mapId ?? null, mapContext: 'explicit', actors: [], dialogue: null,
     choice: null, motion: null, wait: 0, flags: {...options.flags}, trace: [], queue: [], stepCount: 0,
-    location: null, message: null, skippedBattleSteps: 0};
+    location: null, message: null, skippedBattleSteps: 0,
+    camera:{x:256,y:256,targetActor:null},cameraMotion:null};
   let sequence = [], position = 0, counter = 0, menuResult = 0;
   let tasks = [], taskSerial = 0, pending = null;
   const maxSteps = options.maxSteps ?? 10000;
@@ -42,7 +44,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   };
   const actor = (id, x = 0, y = 0) => {
     let item = state.actors.find(a => a.id === id);
-    if (!item) { item = {id, name: displayActor(id), x, y, facing: 0, visible: true}; state.actors.push(item); }
+    if (!item) { item = {id, name: displayActor(id), identity:actorInfo(id), x, y, facing: 0, visible: true}; state.actors.push(item); }
     return item;
   };
   function setMap(id, context) {
@@ -51,7 +53,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   }
   const openingRecord = 30;
   if (state.mapId === null) {
-    if (opening || sceneId === 1) setMap(nativeMap(rom, openingRecord), 'opening');
+    if (opening || sceneId === 1 || sceneId === 6) setMap(nativeMap(rom, openingRecord), 'opening');
     // Fixture-specific context, checked in a pinned-retail Herb Picking replay.
     else if (sceneId === 14 && [PROFILE.id,PROFILE.chineseId].includes(rom.profile)) setMap(nativeMap(rom, 32), 'herb-picking');
     else {
@@ -78,6 +80,17 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     if (key === page) lines.set(Number(line), {text: diff.after.text, tokens: diff.after.tokens});
   }
   let anchor;
+  // Scene 6 inherits the school cast from the opening. Use its last explicit
+  // placements as context, not invented actors at (0,0) when dialogue starts.
+  if(sceneId===6) {
+    for(const c of rom.programs.get('0/0')?.commands ?? []) {
+      const p=c.operands;
+      if(c.operation==='placeSceneActor')Object.assign(actor(p.actor),{x:p.tile&15,y:p.tile>>>4,facing:p.facing,visible:p.visibility!==3});
+      if(c.operation==='setActorTile'&&state.actors.some(a=>a.id===p.actor)) {
+        const item=actor(p.actor);if(p.x!==255)item.x=p.x;if(p.y!==255)item.y=p.y;
+      }
+    }
+  }
   if (opening) {
     for (const member of opening.cast) {
       Object.assign(actor(OPENING_CAST[member.actor]), member, {id: OPENING_CAST[member.actor],
@@ -91,7 +104,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     seedCast();
     const original = rom.pages.get(String(nativeScene.dialoguePage))?.records[anchor.operands.textSelector];
     sequence = [...nodes(recipe.steps, 'fragment'),
-      {type: 'say', text: original?.preview ?? '', speakerName: displayActor(anchor.operands.speakerHandle), path: 'native.anchor'},
+      {type: 'say', text: original?.preview ?? '', speakerHandle:anchor.operands.speakerHandle, path: 'native.anchor'},
       {type: 'resume', path: 'native.resume'}];
   } else {
     const key = programKey(scene.script.group, scene.script.program);
@@ -108,8 +121,11 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   }
   state.queue = sequence.slice(0, 8).map(({type, text, path}) => ({type, text, path}));
 
-  function speak(text, name, path) {
-    state.dialogue = {text, speaker: name ?? '', path}; state.choice = null; state.phase = 'dialogue';
+  function speak(text, handle, path) {
+    const info=actorInfo(handle);
+    state.dialogue = {text, speaker:info.label, speakerInfo:info,
+      actorId:state.actors.some(a=>a.id===handle) ? handle : null,path};
+    state.choice = null; state.phase = 'dialogue';
   }
   function block(operation) { state.phase = 'unsupported'; state.message = operation; }
   function move(id, x, y, facing, duration = 600) {
@@ -117,26 +133,43 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     state.motion = {actor: id, fromX: item.x, fromY: item.y, x, y, facing, elapsed: 0, duration};
     state.phase = 'motion';
   }
+  function moveCamera(x,y,mode,amount,targetActor=null) {
+    if(mode===3){block('camera-task-mode-3');return;}
+    check([0,1,2].includes(mode),'Unknown camera mode');
+    let frames=amount;
+    if(mode!==1) {
+      check(amount>0,'Invalid camera speed');
+      const speed=mode===0 ? rom.bytes[0x3a8190+amount-1] : amount;
+      check(speed>0,'Invalid camera speed');
+      frames=Math.ceil(Math.hypot(x-state.camera.x,y-state.camera.y)/speed);
+    }
+    check(Number.isFinite(frames)&&frames<=36000,'Camera move exceeds preview time limit');
+    state.camera.targetActor=targetActor;
+    if(!frames){Object.assign(state.camera,{x,y});return;}
+    state.cameraMotion={fromX:state.camera.x,fromY:state.camera.y,x,y,elapsed:0,duration:frames*1000/60};
+    state.phase='camera';
+  }
   function advanceAuthoring() {
     const node = sequence[position++];
     if (!node) {state.phase = 'done'; return;}
     trace(node.type, node.text ?? node.prompt ?? node.actor ?? null, node.path);
     if (node.type === 'say') {
-      let name = node.speakerName;
-      if (!name && opening) name = displayActor(OPENING_CAST[node.actor]);
-      if (!name && recipe) {
+      let handle = node.speakerHandle;
+      if (handle === undefined && opening) handle = OPENING_CAST[node.actor];
+      if (handle === undefined && recipe) {
         const binding = node.speaker ? recipe.speakers[node.speaker] : null;
         const command = binding ? source.commands.filter(c => c.operation === 'say' && c.operands.textSelector === binding.dialogue)[(binding.occurrence ?? 1) - 1] : anchor;
-        name = displayActor(command.operands.speakerHandle);
+        handle = command.operands.speakerHandle;
       }
-      speak(node.text, name, node.path);
+      speak(node.text, handle, node.path);
     } else if (node.type === 'walk') move(OPENING_CAST[node.actor], node.x, node.y, DIRECTIONS.indexOf(node.facing));
     else if (node.type === 'face') actor(OPENING_CAST[node.actor]).facing = DIRECTIONS.indexOf(node.facing);
     else if (node.type === 'if') {
       const enabled = Boolean(state.flags[recipe.flags[node.flag]]);
       sequence.splice(position, 0, ...nodes(enabled ? node.then : node.else ?? [], `${node.path}.${enabled ? 'then' : 'else'}`));
     } else if (node.type === 'choose') {
-      state.choice = {prompt: node.prompt, labels: [node.first.label, node.second.label], path: node.path, native: false};
+      state.choice = {prompt: node.prompt, labels: [node.first.label, node.second.label],
+        speakerInfo:anchor?describeSceneActor(anchor.operands.speakerHandle,sceneId):null,path: node.path, native: false};
       state.dialogue = null; state.phase = 'choice'; pendingChoice = node;
     } else if (node.type === 'enemyHp') {
       state.skippedBattleSteps++;
@@ -201,9 +234,10 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
           else groups.at(-1).push(token);
         }
         state.choice = {prompt:previewText(line.tokens.slice(0,menuAt),false,rom.characterTable).trimEnd(),
-          labels:[previewText(groups[0],false,rom.characterTable),previewText(groups[1] ?? [],false,rom.characterTable)], path:`native.${offset}`, native:true};
+          labels:[previewText(groups[0],false,rom.characterTable),previewText(groups[1] ?? [],false,rom.characterTable)],
+          speakerInfo:describeSceneActor(p.speakerHandle,sceneId),path:`native.${offset}`, native:true};
         state.phase = 'choice'; state.dialogue = null;
-      } else speak(line.text, displayActor(p.speakerHandle), `native.${offset}`);
+      } else speak(line.text, p.speakerHandle, `native.${offset}`);
     } else if (name === 'placeSceneActor') Object.assign(actor(p.actor), {x:p.tile & 15, y:p.tile >>> 4, facing:p.facing, visible:p.visibility !== 3});
     else if (name === 'placeScenePackedActor') Object.assign(actor(p.type), {x:p.packedXY & 15, y:p.packedXY >>> 4, facing:p.arg, visible:true});
     else if (name === 'setActorFacing') actor(p.actor).facing = p.facing;
@@ -214,6 +248,14 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     } else if (name === 'loadSceneMap') {
       if (p.map > 0) setMap(p.map - 1, 'script');
       else if (state.mapId === null) block('map-context-required');
+    } else if (name === 'moveSceneCamera') {
+      const signed=value=>value>=0x8000?value-0x10000:value;
+      moveCamera(signed(p.x)+120,signed(p.y)+80,p.mode,p.duration);
+    } else if (name === 'moveCameraToActor') {
+      const item=state.actors.find(a=>a.id===p.actor);
+      if(!item){block('camera-actor-context-required');return;}
+      const point=projectActorPosition(item);
+      moveCamera(point.x,point.y-20,p.mode,p.amount,p.actor);
     } else if (name === 'queueScene') state.trace.at(-1).detail = `scene ${p.scene}`;
     else if (name === 'setSceneRuntimeMode') {
       state.phase = [4,8].includes(p.mode) ? 'battle' : 'done';
@@ -231,6 +273,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   function step() {
     if (['battle','done','unsupported','choice','dialogue'].includes(state.phase)) return snapshot();
     if (state.phase === 'motion') {tick(state.motion.duration); return snapshot();}
+    if (state.phase === 'camera') {tick(state.cameraMotion.duration);return snapshot();}
     if (state.phase === 'waiting') {tick(state.wait); return snapshot();}
     if (++state.stepCount > maxSteps) {block('execution-limit'); return snapshot();}
     try { if (state.mode === 'native') advanceNative(); else advanceAuthoring(); }
@@ -245,6 +288,11 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
       const ratio = m.duration ? m.elapsed / m.duration : 1;
       item.x = m.fromX + (m.x - m.fromX) * ratio; item.y = m.fromY + (m.y - m.fromY) * ratio;
       if (ratio === 1) {item.facing = m.facing; state.motion = null; state.phase = 'ready';}
+    } else if(state.phase==='camera') {
+      const m=state.cameraMotion;m.elapsed=Math.min(m.duration,m.elapsed+ms);
+      const ratio=m.duration?m.elapsed/m.duration:1;
+      state.camera.x=m.fromX+(m.x-m.fromX)*ratio;state.camera.y=m.fromY+(m.y-m.fromY)*ratio;
+      if(ratio===1){state.cameraMotion=null;state.phase='ready';}
     } else if (state.phase === 'waiting') {
       state.wait = Math.max(0, state.wait - ms); if (!state.wait) state.phase = 'ready';
     }

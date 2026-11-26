@@ -145,8 +145,8 @@ test('CN placeholders remain read-only and a custom table cannot authorize unkno
   const mapped=withCharacterTable(rom,table);
   assert.ok(catalog(mapped,{includeDialogue:true}).pages.some(p=>p.lines.some(r=>r.opaque)));
   assert.throws(()=>importProject(rom,project,{...project,characterTable:table,dialogue:{'4:54':{text:'你好'}}}),/read-only/);
-  const damaged=input.slice();damaged[0x100]^=1;
-  await assert.rejects(openRom(damaged),/changes the US engine/);
+  const damaged=input.slice();damaged[0x122abc]^=1;
+  await assert.rejects(openRom(damaged),/changes the scene VM/);
   const dataMod=input.slice();dataMod[0x400000]^=1;
   const opened=await openRom(dataMod);assert.equal(opened.rom.profile,PROFILE.chineseId);
   assert.deepEqual(build(opened.rom,{...opened.project,characterTable:table}).bytes,dataMod);

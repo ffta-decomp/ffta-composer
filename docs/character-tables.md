@@ -8,7 +8,10 @@ a selectable preset; its source provenance is retained in NOTICE.
 
 ## In the editor
 
-1. Open a supported US or reviewed US Chinese ROM.
+1. You can select a built-in table or import a custom table before opening a ROM.
+   The header selector stays enabled on the welcome screen. **Automatic by ROM**
+   keeps the normal ROM-specific default; a manual selection applies to the next
+   successful ROM load. Then open a supported US or reviewed US Chinese ROM.
 2. Use the **Character table** selector in the page header: **Original US**,
    **US Chinese v1.1**, or **Import custom character table…**. The same selector
    is available in Project → Character table.
@@ -79,15 +82,27 @@ preview does not canonicalize duplicate aliases or replace invisible controls.
 Changed records encode through the selected width domain and preserve untouched
 records in the copied page. Project/ROM SHA-256 binding is unchanged.
 
-The reviewed US Chinese v1.1 executable fingerprint is accepted as
-`ffta-us-cn-layout`, with the original 114-entry descriptor table, fixed root
-pointers, and bounded archive structure still checked. Data-only variants can
-retain their own SHA-256. A supplied mapping cannot bypass unknown engine checks.
+Chinese encoding is detected from the adjacent shop Buy/Sell labels, following
+the battle-word-bank pointer at file offset `0x9028`. Chinese bytes are
+`84 40 87 D4 00` (购买) and `87 D5 81 3F 00` (卖出); US bytes are
+`01 B2 DF E3 00` and `01 C3 CF D6 D6 00`. The bounded bank scan permits relocated
+banks and prepended entries: reviewed builds use indices 33/34, 49/50, and 56/57.
+Detection reports `unknown` or `conflict` rather than guessing when no unique
+language pair exists. Manual table selection remains available.
+
+Compatibility is separate from encoding. Non-retail 16 MiB AFXE revision-zero
+inputs must retain the scene VM core (`0x121E9C..0x123D64`), original 114-entry
+descriptor table, descriptor pointer, fixed resource roots, and bounded archives.
+Changes elsewhere in the executable no longer fail a broad executable hash.
+Each input retains its own SHA-256 for project binding. A supplied mapping cannot
+bypass an incompatible scene VM.
 Opening replacement and battle diagnostics remain restricted to verified retail.
 
 The Chinese archive relocates page bodies while retaining the scene-text root.
-Its padded directories terminate at the first `FFFF` slot; the final record is
-bounded by its parsed stored length. Nineteen known `0000FFFF` source placeholders
+Its padded directories terminate at the first `FFFF` slot. Updated builds can
+relocate record bodies beyond another page's directory; record reads are bounded
+against all known headers and record starts and retain their parsed stored length.
+Nineteen known `0000FFFF` source placeholders
 cannot be decoded and remain visible as read-only opaque records. They are copied
 as source bytes when their page is relocated, and edits targeting them are rejected.
 Other malformed records do not become invented empty strings.
@@ -99,7 +114,9 @@ Browser bridge:
 - `loadCharacterTable(source, name?)` imports/validates a table and returns counts.
 - `getCharacterTable()` returns the normalized project mapping, or `null`.
 - `getCharacterTablePresets()` lists stable preset IDs and names.
-- `selectCharacterTable("us-retail" | "us-cn-v1.1")` selects a built-in preset.
+- `selectCharacterTable("auto" | "us-retail" | "us-cn-v1.1")` selects a built-in
+  mapping or the ROM-specific default. Before loading a ROM, selection/import
+  records a pending choice without creating a project or changing ROM bytes.
   Preset switching validates existing edits before changing the project.
 - Existing project imports accept `characterTable`; explicit `null` clears it.
 - Catalogs, story previews, safe text editing, and simulation use the selected table.
