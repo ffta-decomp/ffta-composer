@@ -21,6 +21,7 @@ for(const [key,program] of rom.programs){
       const s=sim.snapshot();if(['done','battle','unsupported'].includes(s.phase))break;
       if(s.phase==='external'){external++;sim.resolveExternal(s.external.kind==='condition'?{branch:condition}:{complete:true});}
       else if(s.phase==='dialogue'){dialogue++;sim.confirm();}
+      else if(s.phase==='input')sim.confirmName(s.input.value);
       else if(s.phase==='choice')sim.choose(condition?0:1);
       else sim.step();
     }

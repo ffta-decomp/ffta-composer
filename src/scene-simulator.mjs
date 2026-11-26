@@ -8,7 +8,7 @@ import { decodeInstructions, pageKey, programKey, withCharacterTable } from './r
 import { toVmExpression } from './vm-instructions.mjs';
 import { preview as previewText } from './text.mjs';
 import {describeSceneActor} from './scene-actors.mjs';
-import {newSimulationRuntime,simulateRuntimeInstruction,SIMULATION_INSTRUCTIONS} from './simulation-runtime.mjs';
+import {newSimulationRuntime,simulateRuntimeInstruction,SIMULATION_INSTRUCTIONS,selectSimulationEncounter,populateSimulationUnits} from './simulation-runtime.mjs';
 export {SIMULATION_INSTRUCTIONS} from './simulation-runtime.mjs';
 
 // Native scene/save map values are one-based; the map directory is zero-based.
@@ -18,7 +18,11 @@ export const projectActorPosition = actor => ({x:256+(actor.x-actor.y)*16,y:256+
 
 /** Deterministic semantic preview. It never writes ROM bytes, SAVs, or the project. */
 export function createSceneSimulation(rom, project, sceneId, options = {}) {
-  const actorInfo = id => describeSceneActor(id,sceneId,Boolean(opening));
+  const actorInfo = id => {
+    const info=describeSceneActor(id,sceneId,Boolean(opening));
+    const name=[2,15].includes(id)?state.runtime.names?.[1]:null;
+    return name?{...info,name,label:name,identitySource:'preview-name'}:info;
+  };
   const displayActor = id => actorInfo(id).label;
   rom=withCharacterTable(rom,project.characterTable);
   integer(sceneId, 1, 239, 'Scene ID');
@@ -34,7 +38,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     choice: null, motion: null, wait: 0, flags: {...options.flags}, trace: [], queue: [], stepCount: 0,
     location: null, message: null, skippedBattleSteps: 0,
     camera:{x:256,y:256,targetActor:null},cameraMotion:null,
-    runtime:newSimulationRuntime(options.runtime),external:null,coverage:{}};
+    runtime:newSimulationRuntime(options.runtime),external:null,coverage:{},input:null,heightMotion:null};
   let sequence = [], position = 0, counter = 0, menuResult = null;
   let tasks = [], taskSerial = 0, pending = null;
   const maxSteps = options.maxSteps ?? 10000;
@@ -70,7 +74,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
       if (anchor && command.offset > anchor.offset) break;
       if (command.operation === 'placeSceneActor') {
         const p = command.operands, item = actor(p.actor, p.tile & 15, p.tile >>> 4);
-        Object.assign(item, {x: p.tile & 15, y: p.tile >>> 4, facing: p.facing, visible: p.visibility !== 3});
+        Object.assign(item, {x: p.tile & 15, y: p.tile >>> 4, facing: p.facing, visible: Boolean(p.visibility&15)});
       }
     }
   }
@@ -88,7 +92,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   if(sceneId===6) {
     for(const c of rom.programs.get('0/0')?.commands ?? []) {
       const p=c.operands;
-      if(c.operation==='placeSceneActor')Object.assign(actor(p.actor),{x:p.tile&15,y:p.tile>>>4,facing:p.facing,visible:p.visibility!==3});
+      if(c.operation==='placeSceneActor')Object.assign(actor(p.actor),{x:p.tile&15,y:p.tile>>>4,facing:p.facing,visible:Boolean(p.visibility&15)});
       if(c.operation==='setActorTile'&&state.actors.some(a=>a.id===p.actor)) {
         const item=actor(p.actor);if(p.x!==255)item.x=p.x;if(p.y!==255)item.y=p.y;
       }
@@ -129,6 +133,22 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     state.dialogue = {text, speaker:info.label, speakerInfo:info,
       actorId:state.actors.some(a=>a.id===handle) ? handle : null,path};
     state.choice = null; state.phase = 'dialogue';
+  }
+  function runtimeText(line) {
+    if(!line.tokens?.length)return line.text;
+    // Opening text 04/0 is the entered primary name; 51 uses named text slots.
+    // Preserve other controls/variables rather than assigning invented values.
+    return line.tokens.map(token=>{
+      if(sceneId===1&&token.kind==='control'){
+        if(token.code===4&&token.args[0]===0)return state.runtime.names?.[1]??displayActor(15);
+        if(token.code===0x51){
+          const value=token.args[0];
+          const name=({2:state.runtime.names?.[1]??displayActor(15),3:displayActor(16),4:displayActor(17)})[value];
+          if(name)return name;
+        }
+      }
+      return previewText([token],false,rom.characterTable);
+    }).join('');
   }
   function block(operation) { state.phase = 'unsupported'; state.message = operation; }
   function move(id, x, y, facing, duration = 600) {
@@ -252,8 +272,8 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
           labels:[previewText(groups[0],false,rom.characterTable),previewText(groups[1] ?? [],false,rom.characterTable)],
           speakerInfo:describeSceneActor(p.speakerHandle,sceneId),path:`native.${offset}`, native:true};
         state.phase = 'choice'; state.dialogue = null;
-      } else speak(line.text, p.speakerHandle, `native.${offset}`);
-    } else if (name === 'placeSceneActor') Object.assign(actor(p.actor), {x:p.tile & 15, y:p.tile >>> 4, facing:p.facing, visible:p.visibility !== 3});
+      } else speak(runtimeText(line), p.speakerHandle, `native.${offset}`);
+    } else if (name === 'placeSceneActor') Object.assign(actor(p.actor), {x:p.tile & 15, y:p.tile >>> 4, facing:p.facing, visible:Boolean(p.visibility&15)});
     else if (name === 'placeScenePackedActor') Object.assign(actor(p.type), {x:p.packedXY & 15, y:p.packedXY >>> 4, facing:p.arg, visible:true});
     else if (name === 'setActorFacing') actor(p.actor).facing = p.facing;
     else if (name === 'setActorTile') {
@@ -290,13 +310,18 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     else if(['sceneNoop3B','sceneNoop3C','sceneNoop6B'].includes(name))state.trace.at(-1).detail='native-noop';
     else if(name==='setSceneRuntimeState12')state.runtime.sceneState=12;
     else if(name==='prepareMapView'){state.runtime.mapView=p.mode;if(state.runtime.saveBytes[13]===1)external('map-context',p);}
-    else if(name==='loadEncounterUnits')external('encounter-units',p);
-    else if(name==='selectSceneEncounter'){state.runtime.encounter=p.encounter;external('encounter-context',p);}
+    else if(name==='loadEncounterUnits'){
+      if(!populateSimulationUnits(rom,state.runtime,actor))external('encounter-units',p);
+    }
+    else if(name==='selectSceneEncounter'){
+      if(!selectSimulationEncounter(rom,state.runtime,p.encounter))external('encounter-context',p);
+    }
     else if(!simulateRuntimeInstruction({rom,state,actor,move,branch,external,delay},opcode,p))external('unresolved',p);
   }
   function snapshot() {return structuredClone(state);}
   function step() {
-    if (['battle','done','unsupported','external','choice','dialogue'].includes(state.phase)) return snapshot();
+    if (['battle','done','unsupported','external','input','choice','dialogue'].includes(state.phase)) return snapshot();
+    if(state.phase==='height'){tick(state.heightMotion.duration);return snapshot();}
     if (state.phase === 'motion') {tick(state.motion.duration); return snapshot();}
     if (state.phase === 'camera') {tick(state.cameraMotion.duration);return snapshot();}
     if (state.phase === 'waiting') {tick(state.wait); return snapshot();}
@@ -307,7 +332,11 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
   }
   function tick(ms) {
     check(Number.isFinite(ms) && ms >= 0 && ms <= 600000, 'Invalid simulation time');
-    if (state.phase === 'motion') {
+    if(state.phase==='height'){
+      const m=state.heightMotion;m.elapsed=Math.min(m.duration,m.elapsed+ms);
+      const ratio=m.elapsed/m.duration;actor(m.actor).height=m.from+(m.to-m.from)*ratio;
+      if(ratio===1){state.heightMotion=null;state.phase='ready';}
+    }else if (state.phase === 'motion') {
       const m = state.motion, item = actor(m.actor);
       m.elapsed = Math.min(m.duration, m.elapsed + ms);
       const ratio = m.duration ? m.elapsed / m.duration : 1;
@@ -329,6 +358,13 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     return snapshot();
   }
   function confirm() {if (state.phase === 'dialogue') {state.dialogue = null; state.phase = 'ready';} return snapshot();}
+  function confirmName(value) {
+    check(state.phase==='input'&&state.input?.kind==='name','There is no active name entry');
+    check(typeof value==='string'&&value.trim().length>0&&[...value.trim()].length<=8&&!/[\u0000-\u001f\u007f]/.test(value),'Use a name of 1–8 characters');
+    const name=value.trim();(state.runtime.names??={})[state.input.nameKind]=name;
+    for(const item of state.actors.filter(a=>[2,15].includes(a.id))){item.name=name;item.identity=actorInfo(item.id);}
+    trace('name-entry',name,state.location);state.input=null;state.phase='ready';return snapshot();
+  }
   function choose(index) {
     check(state.phase === 'choice', 'There is no active choice'); integer(index, 0, 1, 'Choice');
     if (state.choice.native) {menuResult = index;state.runtime.saveBytes[19]=index;}
@@ -367,7 +403,7 @@ export function createSceneSimulation(rom, project, sceneId, options = {}) {
     if(handoff)state.message='external-handoff';
     return snapshot();
   }
-  return Object.freeze({snapshot, step, tick, confirm, choose, cancel, skip,resolveExternal,
+  return Object.freeze({snapshot, step, tick, confirm, confirmName,choose, cancel, skip,resolveExternal,
     setFlag(id, enabled) {integer(id,0,1535,'Flag');state.flags[id] = Boolean(enabled);return snapshot();},
     setMap(id) {setMap(id,'explicit');if(state.phase === 'unsupported' && state.message === 'map-context-required') {state.phase='ready';state.message=null;}return snapshot();},
   });

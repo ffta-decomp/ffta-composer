@@ -6,7 +6,7 @@ modules, external assets, or ROM changes are required by the runtime.
 
 The [instruction matrix](simulation-instructions.json) enumerates every opcode,
 its native description, and current handling category. There are 36 core entries,
-56 additional model entries, and 22 external-service entries. A model entry may
+57 additional model entries, and 21 external-service entries. A model entry may
 still request context for an operand or mode it cannot faithfully evaluate.
 Classification does not mean complete original-engine behavior.
 
@@ -79,7 +79,7 @@ ffta-us-decomp snapshot `6f16714cb9da9059180dbac7ba7282ac870c8044`, consumers
 114 handlers documented in [the VM reference](scene-vm.md). Implementations are
 independent Composer code by hitsmaxft; reference source was not copied.
 
-### Recorded local results, 2026-11-26
+### Previous sweep results, before the first-act fix (6d9ac85)
 
 - The complete suite passes **56 tests, no skips**, with retail/CN ROM inputs,
   the owner character table, and three updated CN revisions.
@@ -105,6 +105,51 @@ independent Composer code by hitsmaxft; reference source was not copied.
 
 Evidence remains outside Git under `/tmp/ffta-composer-actors/`:
 `js-instruction-sweep.json` and `js-runtime-tests.log`.
+
+## First-act playback acceptance
+
+Opcode recognition and acknowledgement-based sweeps did not establish playable
+scenes. The first-act regression now rejects every `external` and `unsupported`
+phase: it permits only dialogue confirmation and the original name-entry step.
+No skip or external-resolution call is made.
+
+The fixes follow the actual first-act data flow:
+
+- `53` resolves encounter 1 to definition 1, content 30. `4E` reads its nine
+  48-byte unit records and establishes indexed-unit and flagged actor bindings.
+- `3F/40` build inclusive straight-line paths in the specified cache slot. These
+  are path producers, not merely visual-event logs.
+- `44` loads a ROM path ID into scratch slot 15. `41` consumes the specified
+  number of consecutive caches, removing shared endpoints, instead of repeating
+  a missing cache. The opening's cache paths 0/1/2 now exist when consumed.
+- `38` interpolates a signed actor-height delta; the opening's +4/-4 pair returns
+  the actor to the original height. Native callbacks are 08127C54/08127A1C.
+- Transition 10 opens primary-character naming through native factory 0812B208.
+  The preview supplies an actual name field and confirmation, not an external
+  acknowledgement. Names affect preview speaker labels and the opening's
+  primary-name text variable; the authoring project and source ROM are unchanged.
+- Placement's low flag nibble is an enable value: zero hides the actor and
+  nonzero shows it. Value 3 no longer incorrectly hides the teacher.
+
+The actual panel's autoplay processes up to 32 immediate native instructions per
+animation frame, yielding on movement, waits, dialogue, and input. It no longer
+adds 450 ms to every initialization or control opcode. Motion is still an
+approximation and overlapping native action timing remains outside acceptance.
+
+Acceptance uses the US retail input, reviewed Chinese reference, and three
+updated Chinese builds. All five reach the battle boundary after 16 dialogue
+events and one name entry, with **zero external acknowledgements and zero
+unsupported skips**. The complete local suite passes **58 tests, no skips**.
+The actual app-module DOM test also autoplays to battle, submits the name by
+keyboard, checks renamed speakers, and confirms timer cleanup/source preservation.
+It uses canvas stubs; browser-rendered pixels and native animation fidelity are
+not established. Evidence: `first-act-tests.log` and `first-act-dom.json` under
+the local evidence directory above.
+
+Additional independent format/behavior references in snapshot
+`6f16714cb9da9059180dbac7ba7282ac870c8044`: consumers 08123898, 081237D0,
+081256D4, 08124480, 08124974, 08127124, 08126FCC, 08126ED8, 081224B8,
+0812B208, and 08127A1C. Source implementations were not copied.
 
 中文摘要：继续使用 JS。114 条指令均有明确处理分类；可确认的部分建模，
 未知服务或上下文缺失会暂停并要求明确结果，不能据此宣称与原版引擎完全一致。

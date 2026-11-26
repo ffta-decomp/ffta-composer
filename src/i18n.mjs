@@ -1,6 +1,9 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '角色高度移动':'Actor height movement','载入登场角色':'Load scene cast','选择场景配置':'Select scene setup',
+  '沿路径移动':'Follow path','沿坐标路径移动':'Follow coordinate path','场景流程':'Scene flow','角色命名':'Character naming',
+  '角色动作':'Actor action','输入姓名':'Name entry','角色姓名':'Character name','输入角色姓名':'Enter character name','确认姓名':'Confirm name',
   '已到外部流程入口，预览在此结束。':'External workflow reached. This preview ends here.',
   '等待游戏上下文':'Awaiting game context','请指定条件结果':'Choose a condition result',
   '此外部步骤尚未复现，请确认预览继续':'This external step is not reproduced. Confirm to continue the preview',
