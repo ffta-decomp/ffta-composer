@@ -1,6 +1,7 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { PROFILE } from './profile.mjs';
+import { STORY_VM_TABLE } from './story-runtime.mjs';
 import { lowerVmInstruction } from './vm-instructions.mjs';
 import { align, check, concat, digest, eq, integer, put16, put32, u16, u32 } from './binary.mjs';
 import { decodeInstructions, lineKey, openUSRom, pageKey, programKey } from './rom.mjs';
@@ -8,7 +9,6 @@ import { encodeLine, makePage, plainTokens, preview } from './text.mjs';
 import { lowerOpening, OPENING_BANNER, OPENING_ID, OPENING_OUTCOME, OPENING_ROSTER } from './opening.mjs';
 import { appendBeforeDialogue, insertDialogue } from './insertion.mjs';
 import { lowerStoryEdits } from './authoring.mjs';
-import { STORY_VM_TABLE, storyRuntimeCode, storyVmDescriptors } from './story-runtime.mjs';
 import { BATTLE_EVENT_CAPABILITIES, validateBattleEvent } from './battle.mjs';
 
 export const FORMAT = 'ffta.scene-project/v1';
@@ -105,6 +105,7 @@ export function plan(rom, project) {
     fields(project.patches, ['storyChoices'], 'patch options');
     check(!Object.hasOwn(project.patches, 'storyChoices') || typeof project.patches.storyChoices === 'boolean',
       'The Story Choices patch option must be a boolean');
+    check(project.patches.storyChoices !== true, 'Custom runtime instructions are reserved and currently disabled');
   }
   const authored = lowerOpening(rom, project);
   const authoredStories = lowerStoryEdits(rom, authored.project);
@@ -248,11 +249,6 @@ function buildRom(rom, project, updateOpeningBanner) {
   }
   function redirect(table, offset, kind) {
     pointers.push({ kind, offset: table.pointer, before: PROFILE.bus + table.start, after: PROFILE.bus + offset });
-  }
-  if (change.storyRuntime) {
-    const code = allocate('storyRuntime', 'story-choices', storyRuntimeCode);
-    const table = storyVmDescriptors(rom, PROFILE.bus + code);
-    redirect(STORY_VM_TABLE, allocate('sceneVmDescriptors', 'scene-vm', table), 'sceneVmDescriptors');
   }
   if (change.openingRoster) {
     redirect(OPENING_ROSTER, allocate('encounterRoster', OPENING_ID, change.openingRoster), 'encounterRoster');

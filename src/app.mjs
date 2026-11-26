@@ -13,6 +13,7 @@ import { $, button, dialog, download, downloadJson, el, field, handle, notice, n
   serialize, table, textarea } from './ui/controls.mjs';
 import { createBattleEventPanel } from './ui/battle-event.mjs';
 import { createCutscenePanel } from './ui/cutscene.mjs';
+import { createSimulatorPanel } from './ui/simulator.mjs';
 import { createPanelRegistry } from './ui/panels.mjs';
 import { createInspector } from './ui/inspector.mjs';
 import { bindMenus } from './ui/menus.mjs';
@@ -159,7 +160,10 @@ function renderList() {
   $('#scene-count').textContent = tr`${count} / ${state.scenes.length} 个可浏览条目`;
 }
 
+let renderedPanel;
 function render() {
+  renderedPanel?.dispose?.();
+  renderedPanel = null;
   const ready = Boolean(state.rom);
   $('#welcome').hidden = ready;
   $('#rom-name').hidden = !ready;
@@ -174,6 +178,7 @@ function render() {
   const scene = currentScene();
   const [status, warning] = sceneStatus(scene);
   const panel = panels.get(state.tab);
+  renderedPanel = panel;
   $('#scene-title').textContent = panel.title?.(scene) ?? sceneTitle(scene);
   $('#scene-status').hidden = status === 'retail';
   $('#scene-status').textContent = t(statusKeys[status]);
@@ -771,6 +776,7 @@ $('#redo').onclick = () => {
 };
 const panels = createPanelRegistry([
   { id: 'story', label: '剧情', render: renderStory },
+  createSimulatorPanel({getRom: () => state.rom, getProject: () => state.project}),
   { ...createCutscenePanel({ getProject: () => state.project, editCollection, inspector }), retailOnly: true, secondary: true },
   { id: 'index', label: '场景关联', render: renderIndex, secondary: true },
   { id: 'dialogue', label: '对白', render: renderDialogue },
@@ -800,12 +806,7 @@ const tabs = panels.list.map(panel => {
   return { panel, element };
 });
 $('#patch-options').onclick = () => {
-  const choice = el('input');
-  choice.type = 'checkbox';
-  choice.checked = state.project.patches?.storyChoices === true;
-  dialog(t('补丁选项'), [field(t('剧情选择与敌人 HP'), choice)], () => {
-    commit({ ...state.project, patches: { ...state.project.patches, storyChoices: choice.checked } });
-  });
+  dialog(t('补丁选项'), [el('p', t('当前仅使用原版场景指令；自定义指令保留但停用。'))], () => {});
 };
 $('#agent').onclick = () => dialog(t('Agent 数据交换'), [
   el('p', t('场景目录供检索和定位。项目 JSON 记录改动，差异报告包含 ROM 写入范围。'), 'note'),
@@ -841,6 +842,7 @@ window.fftaSceneEditor = Object.freeze({
     return structuredClone(describeStory(state.rom, state.plan, id, variant));
   },
   getProject() { check(state.rom, 'Open a ROM first'); return structuredClone(state.project); },
+  getSimulation() { return panels.get('simulation').getSnapshot(); },
   exportProject(format = 'json') {
     check(state.rom, 'Open a ROM first');
     return formatProjectText(state.project, format);

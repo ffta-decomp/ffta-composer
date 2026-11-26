@@ -3,8 +3,8 @@
 FFTA Composer parses JSON and a restricted Lua data language into the same project
 model, validates it, and compiles native FFTA US scene bytecode, dialogue, and
 resource directories. Ordinary dialogue and flag branches use native instructions.
-Interactive choices and arbitrary encounter HP use an explicitly enabled runtime
-patch. There is no Lua interpreter on the GBA. An encodable operand combination
+Interactive choices use the original menu producer and native `0x71`/`0x19`
+branches. Custom runtime instructions are retained as reference code but disabled. There is no Lua interpreter on the GBA. An encodable operand combination
 is not necessarily a verified gameplay sequence.
 
 Complete importable examples: [native branches, JSON](../examples/herb-arrival.json)
@@ -15,7 +15,7 @@ Complete importable examples: [native branches, JSON](../examples/herb-arrival.j
 check ROM references, resource capacity, or execution timing.
 
 The native VM already has menu-result branching in `0x71`. The current high-level
-`choose` uses patch opcode `0x72` to provide B-cancel re-prompting. Opcodes
+`choose` uses native `0x71`; B cancellation follows the second route. Opcodes
 `0x15/0x16` wait on a frame countdown; `0x03/0x04` wait for registered child
 scripts. Existing v1 operation names remain compatible even where those names
 are less precise than the runtime analysis.
@@ -24,7 +24,7 @@ are less precise than the runtime analysis.
 
 | Layer | Available capabilities | Output and verification boundary |
 | --- | --- | --- |
-| `storyEdits` | Insert dialogue, flag branches, binary choices, and encounter HP edits before an existing line | Clone the host script/page into expanded space, then resume the original line; Herb Picking arrival has mGBA coverage |
+| `storyEdits` | Insert dialogue, flag branches, and binary choices before an existing line | Clone the host script/page into expanded space, then resume the original line; Herb Picking arrival has mGBA coverage |
 | `openings["first-act"]` | Opening cast, dialogue, walking, facing, Goblin encounter, and continuation | Dedicated native-data compiler with fixed opening map/encounter/deployment templates |
 | `programs` | 31 editable named operations, typed expressions for all 114 opcodes, opaque preservation, dialogue insertion | Encoding and branch-boundary validation; general combinations still need gameplay validation |
 | `dialogue`, `pages`, `scenes` | Text/tokens, page cloning, new pages, scene-index links | Append resources; a new index entry does not register a map or mission trigger |
@@ -32,8 +32,8 @@ are less precise than the runtime analysis.
 
 Input must be a validated 16 MiB US `AFXE` ROM. Same-layout data mods can use
 ordinary scene, dialogue, and script tools after compatibility checks; their
-projects retain their own input SHA-256. Opening replacement and interactive
-instructions require the pinned `ffta-us-retail` digest. A specific FFT Mod has
+projects retain their own input SHA-256. Opening replacement requires the pinned `ffta-us-retail` digest.
+Native choices follow the ordinary scene resource compatibility checks. A specific FFT Mod has
 not been tested. Engine hacks, relocated resources, and other revisions need
 their own profiles. Editor-exported 32 MiB ROMs reopen only after an exact rebuild.
 
@@ -96,69 +96,46 @@ functions, general key sampling, or custom persistent-state APIs. Low-level
 `setStoryFlag` requires knowledge of the original flag's role; it does not identify
 unused save bits.
 
-### Binary choices and encounter HP: optional patch
+### Binary choices: native instructions only
 
-Set `patches: {"storyChoices": true}`, or `patches = {storyChoices = true}` in Lua.
-The UI entry is **Project → Patch options → Story choices and enemy HP**. It is
-off by default. `choose` and `enemyHp` fail validation when it is disabled, before
-partial application. Remove dependent steps before disabling it. Enabling an
-unused patch does not install runtime code.
-
-Declare `enemies: {"captain":{"slot":0}}`, then use this `steps` value:
+`choose` needs no patch option. JSON and Lua compile into the same native menu
+and branch sequence:
 
 ```json
-[{"type":"choose","prompt":"What about the ward?",
-  "first":{"label":"Break","steps":[{"type":"enemyHp","enemy":"captain","hp":12}]},
-  "second":{"label":"Leave","steps":[{"type":"enemyHp","enemy":"captain","hp":72}]}
-}]
+[{"type":"choose","prompt":"Which route?",
+  "first":{"label":"Break","steps":[{"type":"say","text":"Break route."}]},
+  "second":{"label":"Leave","steps":[{"type":"say","text":"Leave route."}]}}]
 ```
 
 ```lua
-{choose("What about the ward?",
-  option("Break", {enemyHp("captain", 12)}),
-  option("Leave", {enemyHp("captain", 72)}))}
+{choose("Which route?",
+  option("Break", {say("Break route.")}),
+  option("Leave", {say("Leave route.")}))}
 ```
 
-| Step | Parameters and behavior |
+| Expression | Contract |
 | --- | --- |
-| `choose(prompt, first, second)` | Exactly two options; nonblank prompt up to 48 characters/two lines; nonblank labels up to 11 characters without CR/LF; each route needs at least one step; nesting counts toward global limits |
-| `option(label, steps)` | Builds option data; not an independently executable step |
-| `enemyHp(enemy, hp)` | Declared enemy, integer HP 1–999; writes current and maximum HP for this encounter only; does not change attack, other stats, global templates, or saves |
+| `choose(prompt, first, second)` | Exactly two options; prompt up to 48 characters/two lines; labels up to 11 characters without CR/LF; each route must contain a step; nesting counts toward global limits |
+| `option(label, steps)` | Option data, not an independently executable step |
+| `enemyHp(enemy, hp)` | Reserved syntax; rejected by the current compiler because custom runtime instructions are disabled |
 
-The original dialogue system draws the cursor, handles left/right selection,
+The original dialogue system draws the cursor and handles left/right selection,
 A confirmation, and B cancellation. Standard token `0x32`, argument `0x10`, and
-two separators form the menu. Native opcode `0x71` can test the first-choice
-result; current patch opcode `0x72` provides two route offsets and replays the
-current question on B. B does not return to the previous question or undo earlier
-steps. Menus inherit the anchor speaker. This is not an L/R interface or general
-key listener; three-or-more options are not supported. Character limits do not
-guarantee pixel layout, so inspect the game display.
+two separators form the menu. Native `0x71` branches for result zero; native
+`0x19` joins the routes. Result one and B cancellation (255) both take the second
+route. **B does not re-prompt or undo earlier choices.** Menus inherit the anchor
+speaker. Three-or-more options and arbitrary key listeners are not provided.
 
-Opcode `0x73` writes encounter unit records and ignores vacant records. Although
-its runtime bounds check covers slots 0–11, the public compiler permits only
-**retail scene 14, enemy slots 0–3**. Choose an anchor after units are loaded and
-before later initialization would overwrite HP. The fixture uses
-`beforeDialogue: 5`; structural validation alone cannot establish other timing.
-Other encounters have not been validated.
+The Herb Ward example exercises two choice levels: Break/Scatter, Break/Keep,
+Leave/Flank, and Leave/Duel. Its dialogue identifies the route without changing
+unit HP, stats, saves, or encounter composition.
 
-The patch appends 100 bytes of ARM7TDMI Thumb and 116 VM descriptors in expanded
-space. It preserves all bytes of the first 114 native descriptors and redirects
-the table pointer. Opcode `0x72` is five bytes; `0x73` is four. The high-level
-compiler generates them; low-level `op`/`native` cannot inject them. There is no
-in-game patch toggle or save option.
-
-The complete [herb-ward fixture](../examples/herb-ward.lua) has two choice levels:
-
-| First question | Second question | Slot 0 current / maximum HP |
-| --- | --- | --- |
-| Break | Scatter | 12 / 12 |
-| Break | Keep | 28 / 28 |
-| Leave | Flank | 52 / 52 |
-| Leave | Duel | 72 / 72 |
-
-All routes into battle and B re-prompting have mGBA evidence. Automated tests also
-cover compilation, rejoining, JSON/Lua equivalence, patch gating, and exact reopen.
-This is neither physical-device acceptance nor full battle/settlement coverage.
+`runtime/story_choices.s` and `src/story-runtime.mjs` retain the earlier custom
+`0x72`/`0x73` implementation for reference. No active compiler path emits them or
+installs their code or expanded descriptor table. `patches.storyChoices: true`
+is rejected; omitted or false is accepted. Arbitrary HP assignment is unavailable
+until a separately approved implementation is selected. Low-level expressions
+cannot bypass the existing native opcode/layout restrictions.
 
 ## 3. Opening cutscene: `openings["first-act"]`
 
@@ -383,22 +360,21 @@ node tools/scene.mjs diff /path/to/retail.gba examples/herb-ward.lua
 node tools/scene.mjs build /path/to/retail.gba examples/herb-ward.lua /outside/ward.gba
 ```
 
-Without ROM input, integration tests are skipped. With the pinned ROM, tests cover
-all 114 expressions, all 34,395 original instructions, four compiled choice routes,
-menu tokens, patch gating, layout-mod rejection, descriptor preservation, allowed
-retail-prefix writes, JSON/Lua identity, and exact reopen. They do not replace
-native rendering/input/battle validation.
+Without ROM input, integration tests are skipped. The pinned-ROM suite passes
+36 tests with no skips, including all 114 expressions, all 34,395 original
+instructions, native menu routes and cancellation, unchanged descriptors,
+JSON/Lua identity, and exact reopen. Builds allocate scene data only, with no
+custom runtime or descriptor-table allocation. Offline builds pass.
 
-On 2026-11-25, 25 tests passed with ROM input and none skipped; without ROM, 11
-passed and 14 skipped. The offline build passed. Reassembled patch code matched
-all 100 embedded bytes. mGBA replayed four routes and cancellation; HP was 12/12,
-28/28, 52/52, 72/72. All 353 sampled frames matched the handoff evidence. SAV data
-was loaded into memory only. There was no device or full victory/settlement test.
-ROMs, saves, and replay assets remain outside Git and public builds.
+Native mGBA evidence for the current menu implementation is recorded in
+[native choice regression](native-choice-regression.md). Earlier 12/28/52/72 HP
+and B re-prompt evidence exercised the now-disabled custom handlers and does not
+validate the current native-only implementation. No physical-device or full
+victory/settlement acceptance is claimed. ROM/SAV/replay assets remain local.
 
 ## 中文摘要
 
 JSON 与受限 Lua 表达同一个项目模型，导出为原生场景数据。原生 VM 共 114 条指令；
 31 条沿用可编辑操作数，83 条提供可逆命名表达并保留原布局和字节保护。
-原版已有 `0x71` 菜单分支；当前高阶选项补丁增加 B 取消重问和指定敌人 HP。
+原版已有 `0x71` 菜单分支；当前选项只编译原版指令；B 取消进入第二路线。自定义指令保留但停用，不能设置任意 HP。
 以上文档区分编码范围、静态分析与游戏实测，不代表任意组合都已验证。

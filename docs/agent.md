@@ -32,6 +32,8 @@ The browser bridge on the editor's own page exposes:
 - `getCatalog({ includePrograms, includeDialogue })`
 - `getStory(sceneId, variantIndex = 0)` → ordered story steps, resolved dialogue, and known branch offsets
 - `getProject()` → project object
+- `getSimulation()` → a cloned preview snapshot while the Simulation tab is active,
+  otherwise `null`; see [simulation semantics and limitations](simulation.md)
 - `exportProject('json' | 'lua')` → complete project text
 - `preview(projectOrText, 'merge' | 'replace')`
 - `apply(projectOrText, 'merge' | 'replace')`
@@ -54,8 +56,8 @@ this authoring language.
 | --- | --- |
 | `say(text)`, `sayAs(actor, text)` or `say(text, actor)` | Dialogue step with an optional native speaker binding |
 | `when(flag, yes, no)` | Native flag branch. The last argument is optional. |
-| `choose(prompt, first, second)`, `option(label, steps)` | Native two-option dialogue with patch-gated branching |
-| `enemyHp(enemy, hp)` | Patch-gated encounter HP (verified retail scene 14, slots 0–3) |
+| `choose(prompt, first, second)`, `option(label, steps)` | Native two-option dialogue with 71/19 branching; B takes the second route |
+| `enemyHp(enemy, hp)` | Reserved syntax; rejected while custom runtime instructions are disabled |
 | `op(name, operands)` | Named native instruction |
 | `native(opcode, bytes)` | Preserved instruction and its opaque bytes |
 | `glyph(code, width)`, `control(code, args, side)`, `separator()` | Dialogue tokens. The side is optional. |
