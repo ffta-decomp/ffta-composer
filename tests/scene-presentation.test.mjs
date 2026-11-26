@@ -74,7 +74,7 @@ test('camera jumps, signed targets, timed pans and actor targets change view sta
   assert.equal(sim.tick(500).camera.x,147);assert.equal(sim.snapshot().camera.y,230);
   assert.equal(sim.tick(500).phase,'ready');sim.step();assert.equal(sim.step().phase,'camera');
   let s=sim.step();assert.deepEqual(s.camera,{x:224,y:308,targetActor:15});
-  s=sim.step();assert.equal(s.phase,'unsupported');assert.equal(s.message,'camera-task-mode-3');
+  s=sim.step();assert.equal(s.phase,'external');assert.equal(s.external.kind,'camera-task');
   assert.equal(JSON.stringify(project),before);
 });
 

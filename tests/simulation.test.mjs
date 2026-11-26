@@ -198,7 +198,7 @@ test('native playback pauses on unsupported behavior and bounds loops', {skip:!s
   const {rom,project}=await open();
   project.scenes[234]={script:{group:0,program:12},dialoguePage:1};
   project.programs['0/12']={instructions:[
-    {operation:'selectCurrentSceneEntity',operands:{handle:15}},
+    {operation:'moveSceneCamera',operands:{x:0,y:0,mode:4,duration:1}},
     {operation:'finishSceneTask',operands:{}},
   ]};
   let simulation=createSceneSimulation(rom,project,234,{mapId:0});

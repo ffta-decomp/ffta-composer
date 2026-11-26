@@ -1,6 +1,10 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '已到外部流程入口，预览在此结束。':'External workflow reached. This preview ends here.',
+  '等待游戏上下文':'Awaiting game context','请指定条件结果':'Choose a condition result',
+  '此外部步骤尚未复现，请确认预览继续':'This external step is not reproduced. Confirm to continue the preview',
+  '条件成立':'Condition true','条件不成立':'Condition false','确认继续预览':'Continue preview explicitly',
   '未被场景对白指令引用':'No scene dialogue instruction references this line',
   '镜头移动':'Camera movement','全图':'Full map','跟随脚本镜头':'Follow script camera','定位说话者':'Locate speaker','缩放':'Zoom',
   '地图与静态角色来自本地 ROM；未绑定角色显示编号标记。拖动画面移动镜头。':'Map and static character poses come from your ROM. Unbound actors use numbered markers. Drag to pan.',

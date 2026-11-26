@@ -9,7 +9,7 @@ import {speakerLabel} from './speaker.mjs';
 
 const readable = name => name.replace(/([a-z])([A-Z])/g, '$1 $2');
 const phaseLabels = {ready: '准备', dialogue: '对白', choice: '选择', motion: '移动', camera:'镜头移动',waiting: '等待',
-  unsupported: '需要确认', battle: '战斗入口', done: '播放结束'};
+  unsupported: '需要确认', external:'等待游戏上下文',battle: '战斗入口', done: '播放结束'};
 const traceLabels = {say:'对白', walk:'移动', face:'转身', if:'分支', choose:'选择', choice:'选择',
   enemyHp:'跳过战斗步骤', battle:'战斗入口', resume:'继续原流程', cancel:'原生取消', 'skip-unsupported':'手动跳过'};
 
@@ -121,7 +121,8 @@ export function createSimulatorPanel({getRom, getProject}) {
       if(!bitmap)return;
       const center=viewCenter??snapshot.camera;
       ctx.save();ctx.translate(256,256);ctx.scale(zoom,zoom);ctx.translate(-center.x,-center.y);
-      ctx.imageSmoothingEnabled=false;ctx.drawImage(bitmap.canvas,0,0);
+      ctx.imageSmoothingEnabled=false;
+      if(snapshot.runtime.display.backgrounds)ctx.drawImage(bitmap.canvas,0,0);
       for(const actor of [...snapshot.actors].filter(a=>a.visible).sort((a,b)=>a.x+a.y-b.x-b.y)){
         const {x,y}=projectActorPosition(actor),pose=sprite(actor.id,actor.facing);
         const speaking=actor.id===(snapshot.dialogue?.speakerInfo??snapshot.choice?.speakerInfo)?.handle;
@@ -143,15 +144,16 @@ export function createSimulatorPanel({getRom, getProject}) {
       const s=model.snapshot();draw(s);
       zoomSelect.value=String(zoom);
       play.textContent=t(playing?'暂停':'播放');
-      play.disabled=['done','battle','unsupported'].includes(s.phase);
-      next.disabled=['choice','done','battle','unsupported'].includes(s.phase);
+      play.disabled=['done','battle','unsupported','external'].includes(s.phase);
+      next.disabled=['choice','done','battle','unsupported','external'].includes(s.phase);
       status.textContent=t(phaseLabels[s.phase]);
       message.hidden=false;
-      if(mapError)message.textContent=`${t('地图读取失败')} · ${mapError}`;
+      if(s.phase==='external')message.textContent=`${t(s.external.kind==='condition'?'请指定条件结果':'此外部步骤尚未复现，请确认预览继续')} · ${readable(s.external.operation)}`;
+      else if(mapError)message.textContent=`${t('地图读取失败')} · ${mapError}`;
       else if(s.mapId===null)message.textContent=t('此场景需要选择地图上下文。');
       else if(s.phase==='battle')message.textContent=t('已到战斗入口，模拟在此暂停。');
       else if(s.phase==='unsupported')message.textContent=`${t('尚未模拟')} · ${readable(s.message)}`;
-      else if(s.phase==='done')message.textContent=t(s.message==='resume-original'?'已接回原对白；后续原生流程未执行。':'场景播放结束。');
+      else if(s.phase==='done')message.textContent=t(s.message==='external-handoff'?'已到外部流程入口，预览在此结束。':s.message==='resume-original'?'已接回原对白；后续原生流程未执行。':'场景播放结束。');
       else message.hidden=true;
       box.hidden=!s.dialogue&&!s.choice;
       speaker.textContent=speakerLabel(s.dialogue?.speakerInfo??s.choice?.speakerInfo);
@@ -164,12 +166,18 @@ export function createSimulatorPanel({getRom, getProject}) {
       }
       focusSpeaker.disabled=!s.actors.some(a=>a.id===info?.handle);
       speech.textContent=s.dialogue?.text??s.choice?.prompt??'';
-      const key=JSON.stringify(s.choice);
+      const key=JSON.stringify([s.choice,s.external]);
       if(key!==choiceKey){
         choiceKey=key;choices.replaceChildren();
         if(s.choice)s.choice.labels.forEach((label,index)=>{
           choices.append(button(label,()=>{model.choose(index);held=0;refresh();schedule();},'choice-option'));
         });
+        if(s.external){
+          const resolve=result=>{model.resolveExternal(result);held=0;refresh();};
+          if(s.external.kind==='condition')choices.append(
+            button(t('条件成立'),()=>resolve({branch:true})),button(t('条件不成立'),()=>resolve({branch:false})));
+          else choices.append(button(t('确认继续预览'),()=>resolve({complete:true})));
+        }
       }
       cancel.hidden=s.phase!=='choice';
       cancel.textContent=t('原生取消');
@@ -197,7 +205,7 @@ export function createSimulatorPanel({getRom, getProject}) {
       else if(s.phase==='dialogue'){
         if(held>Math.min(6000,Math.max(1800,(s.dialogue?.text.length??0)*35))){model.confirm();held=0;}
       }else if(s.phase==='ready'&&lastAction>=450){model.step();lastAction=0;held=0;}
-      if(['done','battle','unsupported'].includes(model.snapshot().phase))stop();
+      if(['done','battle','unsupported','external'].includes(model.snapshot().phase))stop();
       refresh();
       if(model.snapshot().phase!=='choice')schedule();
       else last=0;

@@ -129,7 +129,7 @@ duration, zero duration jumps, mode two derives duration from distance/speed,
 and mode zero reads the native speed table at `0x3A8190`. Camera `46` targets a
 known placed actor. The semantic model interpolates the resulting view center;
 it does not emulate the native integer curve or terrain elevation. Mode three
-still pauses explicitly as unsupported. The stage provides script-camera mode,
+requests explicit external-service confirmation. The stage provides script-camera mode,
 full-map view, drag-to-pan, zoom, and speaker focus. View controls never edit
 the script. Scene 6 uses the opening's last explicit placements as an approximate
 inherited school context; actual save/battle runtime placement may differ.
