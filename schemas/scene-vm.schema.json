@@ -6054,6 +6054,9 @@
               "type": "integer",
               "minimum": 2,
               "maximum": 254
+            },
+            "setup": {
+              "const": "initial"
             }
           }
         }

@@ -5,6 +5,7 @@ import {build,plan} from './project.mjs';
 import {decodeInstructions} from './rom.mjs';
 import {createNativeGame,NATIVE_CORE} from './native-game.mjs';
 import {PROFILE} from './profile.mjs';
+import {sceneActorKind} from './scene-actors.mjs';
 
 export const SCENE_PREVIEW_ENTRIES=Object.freeze([
   {id:53,label:'三颗水晶之后',map:63},
@@ -32,11 +33,13 @@ export function inspectSceneActors(g){
   const valid=p=>p>=0x02000000&&p<0x02040000;
   const registry=g.read32(0x0200f4b0);if(!valid(registry))return[];
   const list=g.read32(registry+16);if(!valid(list))return[];
+  const map=g.read8(0x02002037);
   let node=g.read32(list+4);const seen=new Set(),rows=[];
   while(node){check(valid(node)&&!seen.has(node)&&seen.size<64,'Invalid native actor list');seen.add(node);
     const object=g.read32(node);check(valid(object),'Invalid native actor');const unit=g.read32(object);check(valid(unit),'Invalid native unit');
     const signed=n=>n>=32768?n-65536:n;
-    rows.push({id:g.read8(unit+4),x:g.read8(unit+246),y:g.read8(unit+247),facing:g.read8(unit+248),
+    const id=g.read8(unit+4),kind=sceneActorKind(id,map);
+    rows.push({id,kind,x:g.read8(unit+246),y:g.read8(unit+247),facing:g.read8(unit+248),
       worldX:signed(g.read16(object+8)),worldY:signed(g.read16(object+12)),hidden:Boolean(g.read32(object+48)&1)});
     node=g.read32(node+8);
   }return rows;

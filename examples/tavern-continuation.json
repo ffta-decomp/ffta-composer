@@ -38,7 +38,56 @@
           "operation": "borrowSceneActor",
           "operands": {
             "scene": 53,
-            "actor": 2
+            "actor": 2,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 77,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 79,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 128,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 129,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 130,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 134,
+            "actor": 53,
+            "setup": "initial"
           }
         },
         {
@@ -46,15 +95,6 @@
           "operands": {
             "scene": 134,
             "actor": 4
-          }
-        },
-        {
-          "operation": "placeSceneActor",
-          "operands": {
-            "actor": 2,
-            "tile": 60,
-            "facing": 1,
-            "visibility": 1
           }
         },
         {
@@ -73,14 +113,6 @@
             "y": 270,
             "mode": 0,
             "duration": 1
-          }
-        },
-        {
-          "operation": "playActorAction",
-          "operands": {
-            "actor": 2,
-            "action": 53,
-            "mode": 0
           }
         },
         {
@@ -280,7 +312,7 @@
           "operands": {
             "textSelector": 2,
             "speakerHandle": 4,
-            "presentationFlags": 130
+            "presentationFlags": 144
           }
         },
         {
@@ -358,11 +390,11 @@
       "flags": 16
     },
     "63:1": {
-      "text": "It's me, Marche. Don't you remember?",
+      "text": "It's me, Marche.\nDon't you remember?",
       "flags": 16
     },
     "63:2": {
-      "text": "Sorry. You must have mistaken me for someone else.",
+      "text": "Sorry. You must have\nmistaken me for\nsomeone else.",
       "flags": 16
     },
     "63:3": {

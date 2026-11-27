@@ -111,7 +111,7 @@ export function createScenePreviewPanel({getRom,getProject,onSelectScene,onLoadD
       if(s){image.data.set(session.pixels());ctx.putImageData(image,0,0);}
       status.textContent=!supported?t('当前场景尚无已验证的演示入口'):!context?t('请载入预览配置'):
         rom.sha256!==context.manifest.baseSha256?t('预览配置与 ROM 不匹配'):s?.phase==='done'?t('场景演示结束'):playing?t('正在演示'):t('准备播放');
-      flow.textContent=s?`${t('场景')} ${s.scene} · ${t('地图')} ${s.map} · ${t('角色')} ${s.actors.filter(a=>!a.hidden).length} · ${t('帧')} ${s.frame}`:'';
+      flow.textContent=s?`${t('场景')} ${s.scene} · ${t('地图')} ${s.map} · ${t('角色')} ${s.actors.filter(a=>!a.hidden&&a.kind!=='prop').length} · ${t('帧')} ${s.frame}`:'';
     }
     function schedule(){if(playing&&!frame)frame=requestAnimationFrame(tick);}
     function tick(time){

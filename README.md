@@ -51,6 +51,9 @@ and evidence boundaries. Nested-choice fixture: [JSON](examples/herb-ward.json) 
 **[Scene preview in the editor](docs/scene-editor-preview.md)**: direct native playback,
 editable pub continuation, paired JSON/Lua and validated entry scope.
 
+[Project scene-writing skill](.agents/skills/ffta-scene-writing/SKILL.md) records
+the authoring workflow and observed staging/initialization pitfalls.
+
 ## Input compatibility
 
 | Input | Available tools |

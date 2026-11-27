@@ -10,3 +10,8 @@ export function describeSceneActor(handle, scene, authoredOpening=false) {
   return {handle, name:name ?? null, label:name ?? `Actor ${handle}`,
     identitySource:name ? 'reviewed-scene' : 'unresolved-handle'};
 }
+
+/** Only the reviewed pub templates identify these unit IDs as furniture. */
+export function sceneActorKind(id, map) {
+  return map === 63 && (id === 77 || id === 79) ? 'prop' : 'character';
+}

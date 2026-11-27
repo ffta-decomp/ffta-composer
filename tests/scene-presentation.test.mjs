@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {openRom,build,plan} from '../src/project.mjs';
 import {createSceneSimulation} from '../src/scene-simulator.mjs';
 import {describeStory} from '../src/story.mjs';
-import {describeSceneActor} from '../src/scene-actors.mjs';
+import {describeSceneActor,sceneActorKind} from '../src/scene-actors.mjs';
 import {decodeActorPreview} from '../src/actor-preview.mjs';
 import {detectTextEncoding} from '../src/text-encoding.mjs';
 import {put32} from '../src/binary.mjs';
@@ -38,6 +38,10 @@ test('unresolved speaker handles remain identifiable without inventing names',()
   assert.equal(describeSceneActor(24,1).name,null);
   assert.equal(describeSceneActor(128,234).name,null);
   assert.equal(describeSceneActor(128,14).name,'Red Cap');
+  assert.equal(sceneActorKind(77,63),'prop');
+  assert.equal(sceneActorKind(79,63),'prop');
+  assert.equal(sceneActorKind(53,63),'character');
+  assert.equal(sceneActorKind(77,0),'character');
 });
 
 test('story lines, inserted lines, native menus and playback retain their speaker association',{skip:!source},async()=>{

@@ -13,24 +13,30 @@ export function tavernDemo(rom){
     op('waitForActors'),op('setActorTile',{actor,x,y}),
   ];
   const fade=(mode,frames,level)=>op('fadeSceneBrightness',{mode,frames,level});
-  // Match the original speaking handles/presentation, without copying its text.
-  const source=rom.programs.get('47/0');
+  // Keep native speaker identities; place these authored bubbles below the actors.
+  const reference=rom.scenes[134].script;
+  const source=rom.programs.get(`${reference.group}/${reference.program}`);
+  const setup=(scene,actors)=>actors.map(actor=>op('borrowSceneActor',{scene,actor,setup:'initial'}));
   const speaker=selector=>source.commands.find(c=>c.operation==='say'&&c.operands.textSelector===selector).operands;
-  const say=(textSelector,selector)=>op('say',{...speaker(selector),textSelector});
+  const say=(textSelector,selector)=>op('say',{...speaker(selector),textSelector,presentationFlags:144});
   project.pages[63]={};
   for(const [i,text]of[
     'Ritz? Is that you?',
-    "It's me, Marche. Don't you remember?",
-    'Sorry. You must have mistaken me for someone else.',
+    "It's me, Marche.\nDon't you remember?",
+    'Sorry. You must have\nmistaken me for\nsomeone else.',
     'Ritz...',
   ].entries())project.dialogue[`63:${i}`]={text,flags:16};
   project.scenes[239]={script:{group:0,program:slot},dialoguePage:63};
   project.programs[`0/${slot}`]={instructions:[
     fade(0x31,20,0),op('loadSceneMap',{map:63}),op('prepareMapView',{mode:0}),
-    op('borrowSceneActor',{scene:53,actor:2}),op('borrowSceneActor',{scene:134,actor:4}),
-    place(2,12,3,1),place(4,2,7,3,0),
+    // The pub chairs are native actor objects, not part of the background map.
+    ...setup(53,[2,77,79]),
+    // Retain the original pub's ambient patrons; only the story visitor leaves.
+    ...setup(53,[128,129,130]),
+    // The permanent bartender is 53 in the shared pub setup, not generic patron 130.
+    ...setup(134,[53]),
+    op('borrowSceneActor',{scene:134,actor:4}),place(4,2,7,3,0),
     op('moveSceneCamera',{x:203,y:270,mode:0,duration:1}),
-    op('playActorAction',{actor:2,action:53,mode:0}),
     fade(0x13,20,100),wait(180),
     op('moveSceneCamera',{x:153,y:253,mode:1,duration:45}),
     place(4,2,7,3),...move(4,5,7,3),wait(40),

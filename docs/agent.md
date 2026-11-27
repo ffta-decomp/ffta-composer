@@ -205,3 +205,6 @@ fixture remains pending.
 [Native scene preview and continuation](scene-editor-preview.md) documents the
 verified entry context, project recompilation, native scene queue, actor references
 and the paired pub example. Preview context/state files stay local.
+
+Use the project [scene-writing skill](../.agents/skills/ffta-scene-writing/SKILL.md)
+when adapting, staging or validating a new act; it links the observed failure cases.

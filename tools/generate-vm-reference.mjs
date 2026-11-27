@@ -27,11 +27,13 @@ for (const row of VM_INSTRUCTIONS.filter(row => row.operation === 'native' || ro
         items: {type: 'integer', minimum: 0, maximum: 255}}},
   });
 }
-alternatives.push(namedSchema('borrowSceneActor', [
+const actorReference = namedSchema('borrowSceneActor', [
   {key:'scene',type:'u8',maximum:233}, {key:'actor',type:'u8',maximum:254},
-]));
-alternatives.at(-1).properties.operands.properties.scene.minimum=1;
-alternatives.at(-1).properties.operands.properties.actor.minimum=2;
+]);
+actorReference.properties.operands.properties.scene.minimum=1;
+actorReference.properties.operands.properties.actor.minimum=2;
+actorReference.properties.operands.properties.setup={const:'initial'};
+alternatives.push(actorReference);
 const instruction = {oneOf: alternatives};
 await save('schemas/scene-vm.schema.json', {
   $schema: 'https://json-schema.org/draft/2020-12/schema', $id: 'urn:ffta:scene-vm-instruction:v1',
