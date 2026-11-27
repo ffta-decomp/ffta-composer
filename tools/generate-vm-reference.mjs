@@ -20,13 +20,20 @@ for (const [opcode, [name, , fields]] of Object.entries(OPERATIONS)) {
   alternatives.push(namedSchema(name, fields.map(field => ({key: field.key,
     type: `${field.signed ? 'i' : 'u'}${field.size * 8}`, ...(field.key === 'bit' ? {maximum: 15} : {})}))));
 }
-for (const row of VM_INSTRUCTIONS.filter(row => row.operation === 'native')) {
+for (const row of VM_INSTRUCTIONS.filter(row => row.operation === 'native' || row.opcode === 0x16)) {
   alternatives.push({type: 'object', additionalProperties: false, required: ['operation', 'opcode', 'operands'],
     properties: {operation: {const: 'native'}, opcode: {const: row.opcode},
       operands: {type: 'array', minItems: row.length - 1, maxItems: row.length - 1,
         items: {type: 'integer', minimum: 0, maximum: 255}}},
   });
 }
+const actorReference = namedSchema('borrowSceneActor', [
+  {key:'scene',type:'u8',maximum:233}, {key:'actor',type:'u8',maximum:254},
+]);
+actorReference.properties.operands.properties.scene.minimum=1;
+actorReference.properties.operands.properties.actor.minimum=2;
+actorReference.properties.operands.properties.setup={const:'initial'};
+alternatives.push(actorReference);
 const instruction = {oneOf: alternatives};
 await save('schemas/scene-vm.schema.json', {
   $schema: 'https://json-schema.org/draft/2020-12/schema', $id: 'urn:ffta:scene-vm-instruction:v1',

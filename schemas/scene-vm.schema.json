@@ -6025,6 +6025,42 @@
           }
         }
       }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "operands"
+      ],
+      "properties": {
+        "operation": {
+          "const": "borrowSceneActor"
+        },
+        "operands": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scene",
+            "actor"
+          ],
+          "properties": {
+            "scene": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 233
+            },
+            "actor": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 254
+            },
+            "setup": {
+              "const": "initial"
+            }
+          }
+        }
+      }
     }
   ]
 }

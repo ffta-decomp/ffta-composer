@@ -1,7 +1,7 @@
 # Agent integration and native resource format
 
 See the [complete instruction reference](instructions.md) for parameter ranges, all
-31 named native operations, text controls, patch gating and validation limits.
+32 named native operations, text controls, patch gating and validation limits.
 
 The [complete native VM analysis](scene-vm.md) covers all 114 descriptors,
 including native menu branching (0x71), waits and parallel child scripts.
@@ -201,3 +201,10 @@ correct alternative, passed the next line to Montblanc and returned to the
 original mission dialogue. The [post-battle example](../examples/herb-field-report.json)
 has build and bytecode coverage. A full victory-to-settlement replay of that
 fixture remains pending.
+
+[Native scene preview and continuation](scene-editor-preview.md) documents the
+verified entry context, project recompilation, native scene queue, actor references
+and the paired pub example. Preview context/state files stay local.
+
+Use the project [scene-writing skill](../.agents/skills/ffta-scene-writing/SKILL.md)
+when adapting, staging or validating a new act; it links the observed failure cases.

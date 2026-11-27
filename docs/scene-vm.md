@@ -2,8 +2,8 @@
 
 The original scene VM has **114 instructions, 0x00–0x71**. It schedules parallel
 child scripts, asynchronous actions, waits, and conditional branches for dialogue,
-actors, paths, camera, audio, and dedicated mission workflows. Composer has 31
-editable native operation definitions and typed expressions for the remaining 83,
+actors, paths, camera, audio, and dedicated mission workflows. Composer has 32
+editable native operation definitions and typed expressions for the remaining 82,
 which retain their original source/layout/byte protections. Native engine support
 does not by itself establish a safe, general high-level authoring API.
 
@@ -366,7 +366,7 @@ operations, path references, and action dictionaries. Outstanding work includes
 prompt contracts in 11/12/13, action modes in 0a/21/22/2c, the full meaning of
 38, dedicated UI workflows in 50 and 5c–62, mission rewards/returns, and dynamic
 combat spawning. The typed expression layer below does not remove protections on
-the 83 previously opaque opcodes. New high-level action APIs still need model
+the 82 previously opaque opcodes. New high-level action APIs still need model
 review and proportionate execution tests.
 
 ### Source verification index
@@ -426,15 +426,15 @@ Put the following values inside a program's `instructions` array:
 | `{"operation":"sceneOp0A","operands":{"actor":15,"value":0}}` | `sceneOp0A(15, 0)` | Partially understood0a keeps a neutral name |
 
 `op("name", {operands})` and ordinary Lua tables can express the same data.
-The original31 operation names and `native(opcode, bytes)` remain compatible.
+The original 31 operation names and `native(opcode, bytes)` remain compatible.
 Existing operations can still serialize as `op(...)`; semantic aliases can use
 compact constructors. `toVmExpression(catalogInstruction)` in
 `src/vm-instructions.mjs` produces typed objects; `lowerVmInstruction` lowers them
 back into the existing v1 compilation model. Agent catalogs also include all 114
 in `vmInstructions`.
 
-**A typed name does not remove preservation rules.** The 31 entries marked
-`editing: "named"` retain existing operand editing. The 83 entries marked
+**A typed name does not remove preservation rules.** The 32 entries marked
+`editing: "named"` retain existing operand editing. The 82 entries marked
 `editing: "preserve-native-layout"` have reversible typed encodings, but still
 lower to opaque native records requiring a source, identical layout, and unchanged
 opaque bytes. Renaming `native` does not bypass these guards. Patch 72/73 are not
@@ -450,22 +450,24 @@ node tools/generate-vm-reference.mjs
 It updates JSON descriptions, Lua examples, and schemas from maintained project
 descriptors, without reading or writing game assets.
 
-## 7. Complete regression record: 2026-11-25
+## 7. Regression record (updated 2026-11-27)
 
 - The initial documentation checkpoint passed 25 tests with the pinned US ROM.
-  The expanded suite now passes 36; ROM-dependent tests skip when no input is supplied.
+  An intermediate suite passed 36. The current full suite passes 67 with all
+  local inputs supplied; ROM-dependent tests skip when no input is supplied.
 - All 114 descriptors and static program/scene references reproduced from a fresh
   scan. JSON/Lua equivalence, operand limits, missing/extra arguments, and invalid
   ranges are covered across every typed expression.
 - All 207 nonempty programs and34,395 original instructions were converted to
   typed JSON and compact Lua, then compiled byte-identically. Unchanged builds
   preserve the input ROM.
-- Semantic aliases cannot bypass the 83 opaque operations' source/layout/byte
-  guards. Existing 31 operations and old project representations remain compatible.
+- Semantic aliases cannot bypass the 82 opaque operations' source/layout/byte
+  guards. Existing 32 operations and old project representations remain compatible.
 - Nested-choice JSON/Lua outputs agree. Current builds preserve the native
   descriptors, reject enabling custom instructions, and reopen exactly.
-- The current pinned-ROM suite passes 36 tests with no skips and the offline
-  build passes. Direct mGBA native-71 evidence is recorded in
+- The current suite passes 67 tests with no skips and the offline build passes.
+  Native scene 53→239 continuation and edit/replay coverage are described in
+  [editor preview](scene-editor-preview.md). Direct mGBA native-71 evidence is recorded in
   [native choice regression](native-choice-regression.md).
 - Historical patch-based HP and B re-prompt evidence is retained locally but
   does not describe the current native-only compiler.
@@ -475,12 +477,13 @@ program's representation/encoding regression. It does not mean all 114 handlers
 were exercised naturally. Additional native flag, timing, parallel-task, cancellation,
 and display-layer checks are recorded in [runtime capabilities](runtime-capabilities.md).
 Path workflows and dedicated mission operations primarily have static-analysis
-evidence here. No physical-device or full battle
-settlement acceptance is claimed. ROM/SAV/replay assets remain local.
+evidence here. Natural game completion is a separate claim: see [native playback](native-play.md)
+for the cold Snowball replay. No physical-device acceptance is claimed.
+ROM/SAV/replay assets remain local.
 
 ## 中文摘要
 
 已逐条记录114条原生指令，区分静态数据流、未知下游语义与游戏实测。
 原版已有菜单分支、帧等待、并行子脚本和路径能力；这些不能与编辑器已验证的高阶API混为一谈。
-31条保留可编辑操作数，83条有JSON/Lua命名表达但继续受原布局和字节保护。
-全部25项测试通过，34,395条指令往返编译一致；未宣称114条都已完成自然游戏回放。
+32条保留可编辑操作数，82条有JSON/Lua命名表达但继续受原布局和字节保护。
+全部67项测试通过，34,395条指令往返编译一致；未宣称114条都已完成自然游戏回放。

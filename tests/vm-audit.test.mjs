@@ -19,7 +19,7 @@ test('the reference documents every native descriptor with an exhaustive usage c
   assert.equal(catalog.nonemptyProgramCount, 207);
   assert.equal(catalog.opcodes.reduce((n, row) => n + row.uses, 0), 34395);
   assert.deepEqual(catalog.opcodes.filter(row => !row.uses).map(row => row.opcode), [0x14, 0x1b, 0x3b, 0x3c, 0x6b]);
-  assert.equal(catalog.opcodes.filter(row => row.operation !== 'native').length, 31);
+  assert.equal(catalog.opcodes.filter(row => row.operation !== 'native').length, 32);
   for (const row of catalog.opcodes) {
     assert.ok(row.length >= 1 && row.length <= 64);
     assert.ok(Number.parseInt(row.handler.slice(2), 16) & 1);

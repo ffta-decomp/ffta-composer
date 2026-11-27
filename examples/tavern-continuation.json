@@ -1,0 +1,426 @@
+{
+  "format": "ffta.scene-project/v1",
+  "profile": "ffta-us-retail",
+  "baseSha256": "43fc8204c6dceee58828aebc7af0c72eb807e99f35ad641c8bb0a4fa8b6edc19",
+  "scenes": {
+    "239": {
+      "script": {
+        "group": 0,
+        "program": 8
+      },
+      "dialoguePage": 63
+    }
+  },
+  "programs": {
+    "0/8": {
+      "instructions": [
+        {
+          "operation": "fadeSceneBrightness",
+          "operands": {
+            "mode": 49,
+            "frames": 20,
+            "level": 0
+          }
+        },
+        {
+          "operation": "loadSceneMap",
+          "operands": {
+            "map": 63
+          }
+        },
+        {
+          "operation": "prepareMapView",
+          "operands": {
+            "mode": 0
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 2,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 77,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 79,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 128,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 129,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 53,
+            "actor": 130,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 134,
+            "actor": 53,
+            "setup": "initial"
+          }
+        },
+        {
+          "operation": "borrowSceneActor",
+          "operands": {
+            "scene": 134,
+            "actor": 4
+          }
+        },
+        {
+          "operation": "placeSceneActor",
+          "operands": {
+            "actor": 4,
+            "tile": 114,
+            "facing": 3,
+            "visibility": 0
+          }
+        },
+        {
+          "operation": "moveSceneCamera",
+          "operands": {
+            "x": 203,
+            "y": 270,
+            "mode": 0,
+            "duration": 1
+          }
+        },
+        {
+          "operation": "fadeSceneBrightness",
+          "operands": {
+            "mode": 19,
+            "frames": 20,
+            "level": 100
+          }
+        },
+        {
+          "operation": "waitFrames16",
+          "operands": {
+            "frames": 180
+          }
+        },
+        {
+          "operation": "moveSceneCamera",
+          "operands": {
+            "x": 153,
+            "y": 253,
+            "mode": 1,
+            "duration": 45
+          }
+        },
+        {
+          "operation": "placeSceneActor",
+          "operands": {
+            "actor": 4,
+            "tile": 114,
+            "facing": 3,
+            "visibility": 1
+          }
+        },
+        {
+          "operation": "setContextValue",
+          "operands": {
+            "value": 16
+          }
+        },
+        {
+          "operation": "moveActorOnGrid",
+          "operands": {
+            "actor": 4,
+            "x": 5,
+            "y": 7,
+            "facing": 3,
+            "mode": 0,
+            "speed": 1
+          }
+        },
+        {
+          "operation": "waitForActors",
+          "operands": {}
+        },
+        {
+          "operation": "setActorTile",
+          "operands": {
+            "actor": 4,
+            "x": 5,
+            "y": 7
+          }
+        },
+        {
+          "operation": "waitFrames16",
+          "operands": {
+            "frames": 40
+          }
+        },
+        {
+          "operation": "playActorAction",
+          "operands": {
+            "actor": 2,
+            "action": 54,
+            "mode": 0
+          }
+        },
+        {
+          "operation": "setContextValue",
+          "operands": {
+            "value": 16
+          }
+        },
+        {
+          "operation": "moveActorOnGrid",
+          "operands": {
+            "actor": 2,
+            "x": 12,
+            "y": 4,
+            "facing": 0,
+            "mode": 0,
+            "speed": 2
+          }
+        },
+        {
+          "operation": "waitForActors",
+          "operands": {}
+        },
+        {
+          "operation": "setActorTile",
+          "operands": {
+            "actor": 2,
+            "x": 12,
+            "y": 4
+          }
+        },
+        {
+          "operation": "setContextValue",
+          "operands": {
+            "value": 16
+          }
+        },
+        {
+          "operation": "moveActorOnGrid",
+          "operands": {
+            "actor": 2,
+            "x": 12,
+            "y": 7,
+            "facing": 0,
+            "mode": 0,
+            "speed": 2
+          }
+        },
+        {
+          "operation": "waitForActors",
+          "operands": {}
+        },
+        {
+          "operation": "setActorTile",
+          "operands": {
+            "actor": 2,
+            "x": 12,
+            "y": 7
+          }
+        },
+        {
+          "operation": "setContextValue",
+          "operands": {
+            "value": 16
+          }
+        },
+        {
+          "operation": "moveActorOnGrid",
+          "operands": {
+            "actor": 2,
+            "x": 6,
+            "y": 7,
+            "facing": 1,
+            "mode": 0,
+            "speed": 2
+          }
+        },
+        {
+          "operation": "waitForActors",
+          "operands": {}
+        },
+        {
+          "operation": "setActorTile",
+          "operands": {
+            "actor": 2,
+            "x": 6,
+            "y": 7
+          }
+        },
+        {
+          "operation": "createActionFromHandles",
+          "operands": {
+            "firstHandle": 2,
+            "secondHandle": 4
+          }
+        },
+        {
+          "operation": "createActionFromHandles",
+          "operands": {
+            "firstHandle": 4,
+            "secondHandle": 2
+          }
+        },
+        {
+          "operation": "say",
+          "operands": {
+            "textSelector": 0,
+            "speakerHandle": 2,
+            "presentationFlags": 144
+          }
+        },
+        {
+          "operation": "say",
+          "operands": {
+            "textSelector": 1,
+            "speakerHandle": 2,
+            "presentationFlags": 144
+          }
+        },
+        {
+          "operation": "say",
+          "operands": {
+            "textSelector": 2,
+            "speakerHandle": 4,
+            "presentationFlags": 144
+          }
+        },
+        {
+          "operation": "setContextValue",
+          "operands": {
+            "value": 16
+          }
+        },
+        {
+          "operation": "moveActorOnGrid",
+          "operands": {
+            "actor": 4,
+            "x": 2,
+            "y": 7,
+            "facing": 1,
+            "mode": 0,
+            "speed": 1
+          }
+        },
+        {
+          "operation": "waitForActors",
+          "operands": {}
+        },
+        {
+          "operation": "setActorTile",
+          "operands": {
+            "actor": 4,
+            "x": 2,
+            "y": 7
+          }
+        },
+        {
+          "operation": "placeSceneActor",
+          "operands": {
+            "actor": 4,
+            "tile": 114,
+            "facing": 1,
+            "visibility": 0
+          }
+        },
+        {
+          "operation": "say",
+          "operands": {
+            "textSelector": 3,
+            "speakerHandle": 2,
+            "presentationFlags": 144
+          }
+        },
+        {
+          "operation": "waitFrames16",
+          "operands": {
+            "frames": 45
+          }
+        },
+        {
+          "operation": "fadeSceneBrightness",
+          "operands": {
+            "mode": 49,
+            "frames": 30,
+            "level": 0
+          }
+        },
+        {
+          "operation": "setSceneRuntimeMode",
+          "operands": {
+            "mode": 1
+          }
+        }
+      ]
+    }
+  },
+  "dialogue": {
+    "63:0": {
+      "text": "Ritz? Is that you?",
+      "flags": 16
+    },
+    "63:1": {
+      "text": "It's me, Marche.\nDon't you remember?",
+      "flags": 16
+    },
+    "63:2": {
+      "text": "Sorry. You must have\nmistaken me for\nsomeone else.",
+      "flags": 16
+    },
+    "63:3": {
+      "text": "Ritz...",
+      "flags": 16
+    }
+  },
+  "pages": {
+    "63": {}
+  },
+  "battleEvents": {},
+  "openings": {},
+  "storyEdits": {
+    "tavern-continuation": {
+      "title": "A stranger at the pub",
+      "trigger": {
+        "scene": 53,
+        "beforeDialogue": 20
+      },
+      "resume": "queuedScene",
+      "steps": [
+        {
+          "type": "queueScene",
+          "scene": 239
+        }
+      ]
+    }
+  }
+}

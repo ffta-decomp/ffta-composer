@@ -1,6 +1,17 @@
 // Copyright (C) 2026 hitsmaxft. SPDX-License-Identifier: GPL-3.0-only
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 const english = {
+  '自动继续对白':'Advance dialogue automatically', '酒馆增补一幕':'Pub continuation', '场景演示':'Scene preview','场景演示画面':'Scene preview stage','原版场景画面':'Native scene framebuffer',
+  '播放场景':'Play scene','重播当前场景':'Replay current scene','继续对白':'Continue dialogue',
+  '左选项':'Left option','右选项':'Right option','载入预览配置':'Load preview context',
+  '尚未载入预览配置':'Preview context not loaded','演示场景':'Preview scene','选择已验证场景':'Select a verified scene',
+  '载入酒馆改编示例':'Load tavern adaptation','三颗水晶之后':'After three crystals','宫殿到达':'Palace arrival',
+  '终盘对话':'Final confrontation','结局过渡':'Ending transition','酒馆相遇':'Tavern encounter',
+  '直接演示当前场景。改动剧情后点击重播；不会经过标题、读档或新游戏菜单。':'Preview this scene directly. Edit the story and replay; title, load and new-game menus are bypassed.',
+  '编辑演示剧情':'Edit scene story','剧情脚本 JSON':'Story script JSON','应用剧情修改':'Apply story changes',
+  '正在准备场景':'Preparing scene','当前场景尚无已验证的演示入口':'This scene has no verified preview entry',
+  '请载入预览配置':'Load a preview context','预览配置与 ROM 不匹配':'The preview context does not match the ROM',
+  '场景演示结束':'Scene preview finished','正在演示':'Preview playing','准备播放':'Ready to play','帧':'Frame',
   '新游戏：雪球战':'New game: Snowball','正在进入第一幕':'Entering the first act',
   '游戏尚未生成存档':'The game has not created save data yet',
   '原版试玩':'Native play','指令预览':'Instruction preview','尚未启动原版游戏':'Native game has not started',

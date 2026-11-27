@@ -47,7 +47,7 @@ return {
   waitForSceneCompletion(0),
   -- 0x15 named
   waitFrames8(0),
-  -- 0x16 preserve-native-layout
+  -- 0x16 named
   waitFrames16(0),
   -- 0x17 named
   setSceneRuntimeMode(0),

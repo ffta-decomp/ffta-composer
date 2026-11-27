@@ -13,7 +13,11 @@ ships one offline-capable HTML file and needs no game inputs for its build.
   repair, duplicate, or add scene entries.
 - **Cutscene** authors the opening cast, dialogue, movement, and facing.
   Goblin Patrol demonstrates the opening, encounter, victory, and continuation.
-- **Native play** runs the current project's ROM in mGBA compiled to WebAssembly:
+- **Scene preview** directly replays verified scenes in the existing editor.
+  The pub example retains the original scene, fades out, then plays the added
+  Marche/Ritz act. Edit JSON and replay to execute a fresh candidate. A matching
+  local US context is required; see [scope and setup](docs/scene-editor-preview.md).
+- **Native play** (advanced) runs the current project's ROM in mGBA compiled to WebAssembly:
   original graphics, character animation, camera, dialogue, audio, and combat.
   **New game: Snowball** enters the first act through native Start/A input;
   continue with the on-screen GBA buttons or keyboard. Pause, frame step, speed,
@@ -40,9 +44,15 @@ ships one offline-capable HTML file and needs no game inputs for its build.
 [JSON descriptions](docs/scene-vm-instructions.json) · [Lua expression reference](docs/scene-vm-examples.lua)
 
 **[Complete authoring reference](docs/instructions.md)** covers JSON/Lua syntax,
-31 editable operations, text tokens, native choice menus, reserved custom extensions,
+32 editable operations, text tokens, native choice menus, reserved custom extensions,
 and evidence boundaries. Nested-choice fixture: [JSON](examples/herb-ward.json) /
 [Lua](examples/herb-ward.lua).
+
+**[Scene preview in the editor](docs/scene-editor-preview.md)**: direct native playback,
+editable pub continuation, paired JSON/Lua and validated entry scope.
+
+[Project scene-writing skill](.agents/skills/ffta-scene-writing/SKILL.md) records
+the authoring workflow and observed staging/initialization pitfalls.
 
 ## Input compatibility
 

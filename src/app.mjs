@@ -19,6 +19,8 @@ import { createBattleEventPanel } from './ui/battle-event.mjs';
 import { createCutscenePanel } from './ui/cutscene.mjs';
 import { createSimulatorPanel } from './ui/simulator.mjs';
 import {createNativeGamePanel} from './ui/native-game.mjs';
+import {createScenePreviewPanel} from './ui/scene-preview.mjs';
+import {tavernDemo} from './tavern-demo.mjs';
 import { createPanelRegistry } from './ui/panels.mjs';
 import { createInspector } from './ui/inspector.mjs';
 import { bindMenus } from './ui/menus.mjs';
@@ -862,7 +864,12 @@ $('#redo').onclick = () => {
 };
 const panels = createPanelRegistry([
   { id: 'story', label: '剧情', render: renderStory },
-  createNativeGamePanel({getRom:()=>state.rom,getProject:()=>state.project}),
+  createScenePreviewPanel({getRom:()=>state.rom,getProject:()=>state.project,
+    onSelectScene:id=>{state.selected=id;state.tab='scene-preview';render();},
+    onLoadDemo:handle(()=>{state.selected=53;state.tab='scene-preview';commit(importProject(state.rom,state.project,tavernDemo(state.rom),'merge'));render();}),
+    onProjectChange:project=>commit(importProject(state.rom,state.project,project,'replace')),
+  }),
+  {...createNativeGamePanel({getRom:()=>state.rom,getProject:()=>state.project}),secondary:true},
   {...createSimulatorPanel({getRom: () => state.rom, getProject: () => state.project}),id:'script-preview',label:'指令预览',secondary:true},
   { ...createCutscenePanel({ getProject: () => state.project, editCollection, inspector }), retailOnly: true, secondary: true },
   { id: 'index', label: '场景关联', render: renderIndex, secondary: true },
@@ -934,6 +941,11 @@ window.fftaSceneEditor = Object.freeze({
   getCharacterTablePresets() { return structuredClone(CHARACTER_TABLE_PRESETS); },
   selectCharacterTable(id) { return structuredClone(selectCharacterTable(id)); },
   getSimulation() { return panels.get('simulation').getSnapshot(); },
+  async loadScenePreviewContext(text,name) {
+    const info=await panels.get('scene-preview').loadContext(text,name);if(state.tab==='scene-preview')render();return info;
+  },
+  getScenePreview() {return panels.get('scene-preview').getSnapshot();},
+  showScenePreview(id) {check(state.scenes.some(s=>s.id===id),'Unknown scene');state.selected=id;state.tab='scene-preview';render();},
   getScriptPreview() {return panels.get('script-preview').getSnapshot();},
   exportProject(format = 'json') {
     check(state.rom, 'Open a ROM first');

@@ -2,7 +2,7 @@
 // FFTA Composer — https://github.com/ffta-decomp/ffta-composer ; see LICENSE and NOTICE.
 import { PROFILE } from './profile.mjs';
 import { STORY_VM_TABLE } from './story-runtime.mjs';
-import { lowerVmInstruction } from './vm-instructions.mjs';
+import { compileInstructions } from './program-compiler.mjs';
 import { align, check, concat, digest, eq, integer, put16, put32, u16, u32 } from './binary.mjs';
 import { decodeInstructions, lineKey, openUSRom, pageKey, programKey, withCharacterTable } from './rom.mjs';
 import { normalizeCharacterTable } from './character-table.mjs';
@@ -38,64 +38,6 @@ function compareKeys(a, b) {
   return a.localeCompare(b, 'en', { numeric: true });
 }
 
-function compileInstructions(commands, specs, original) {
-  check(Array.isArray(commands) && commands.length > 0 && commands.length <= 32767, 'Invalid instruction list');
-  commands = commands.map(lowerVmInstruction);
-  const byName = new Map([...specs.values()].filter(spec => spec.operands).map(spec => [spec.operation, spec]));
-  const offsets = new Set();
-  const branches = [];
-  let offset = 0;
-  let opaque = false;
-  const parts = commands.map((command, index) => {
-    fields(command, ['operation', 'opcode', 'operands'], 'instruction');
-    const { operation, operands } = command;
-    const spec = operation === 'native' ? specs.get(command.opcode) : byName.get(operation);
-    check(spec && (operation !== 'native' || !spec.operands), `Invalid instruction at row ${index + 1}`);
-    const bytes = new Uint8Array(spec.size);
-    bytes[0] = spec.opcode;
-    offsets.add(offset);
-    if (operation === 'native') {
-      opaque = true;
-      check(Array.isArray(operands) && operands.length === spec.size - 1, 'Wrong native operand count');
-      operands.forEach((value, i) => { bytes[i + 1] = integer(value, 0, 255, 'Native operand'); });
-    } else {
-      check(command.opcode === undefined, 'Named instructions do not accept an opcode override');
-      fields(operands, spec.operands.map(arg => arg.key), 'operands');
-      let at = 1;
-      for (const arg of spec.operands) {
-        const max = arg.key === 'bit' ? 15 : arg.size === 1 ? 255 : arg.signed ? 32767 : 65535;
-        const value = integer(operands[arg.key], arg.signed ? -32768 : 0, max, arg.key);
-        if (arg.size === 1) bytes[at] = value;
-        else put16(bytes, at, value);
-        at += arg.size;
-      }
-      if (operation === 'adjustScriptOffset' || operation === 'addOffsetWhenTargetFlagSet') {
-        branches.push({ index, offset, target: offset + bytes.length + operands.delta });
-      }
-    }
-    offset += bytes.length;
-    return bytes;
-  });
-  check(offset <= 32767, 'Program exceeds the 16-bit signed instruction range');
-  const final = commands.at(-1);
-  check(original || ['finishSceneTask', 'adjustScriptOffset', 'setSceneRuntimeMode'].includes(final.operation), 'New program needs a terminal instruction');
-  if (opaque) {
-    check(original?.commands.length === commands.length && original.end - original.offset === offset, 'Opaque instructions require a native source program with identical layout');
-    commands.forEach((command, index) => {
-      const old = original.commands[index];
-      check(parts[index][0] === (old.operation === 'native' ? old.opcode : byName.get(old.operation).opcode), 'Changing opcode in an opaque script would invalidate native control flow');
-      if (command.operation === 'native') {
-        check(eq(command.operands, old.operands), 'Unresolved instruction operands are preserved as observed');
-      }
-    });
-  }
-  for (const branch of branches) {
-    const observed = original?.commands[branch.index];
-    if (observed?.offset === branch.offset && observed.operands.delta === commands[branch.index].operands.delta) continue;
-    check(offsets.has(branch.target), `Branch on instruction ${branch.index + 1} must land on an instruction boundary`);
-  }
-  return concat(parts);
-}
 
 export function plan(rom, project) {
   fields(project, ['format', 'profile', 'baseSha256', 'scenes', 'programs', 'dialogue', 'pages', 'battleEvents', 'openings', 'storyEdits', 'patches', 'characterTable'], 'project');
@@ -140,7 +82,7 @@ export function plan(rom, project) {
     check(data.cloneFrom === undefined || source?.commands.length > 0, 'Clone source must be an executable retail program');
     const baseBytes = data.instructions === undefined && source
       ? rom.bytes.subarray(source.offset, source.end)
-      : compileInstructions(data.instructions, rom.specs, source);
+      : compileInstructions(data.instructions, rom.specs, source, rom);
     check(baseBytes.length > 0, 'Program cannot be empty');
     const commands = decodeInstructions(baseBytes, rom.specs);
     const blocks = authoredStories.blocks.get(key);

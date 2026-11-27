@@ -214,7 +214,10 @@
           }
         },
         "resume": {
-          "const": "original"
+          "enum": [
+            "original",
+            "queuedScene"
+          ]
         }
       }
     },
@@ -340,6 +343,24 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 999
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "scene"
+          ],
+          "properties": {
+            "type": {
+              "const": "queueScene"
+            },
+            "scene": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 239
             }
           }
         }
@@ -6804,6 +6825,42 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 255
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operation",
+            "operands"
+          ],
+          "properties": {
+            "operation": {
+              "const": "borrowSceneActor"
+            },
+            "operands": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "scene",
+                "actor"
+              ],
+              "properties": {
+                "scene": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 233
+                },
+                "actor": {
+                  "type": "integer",
+                  "minimum": 2,
+                  "maximum": 254
+                },
+                "setup": {
+                  "const": "initial"
+                }
               }
             }
           }

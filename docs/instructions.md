@@ -26,7 +26,7 @@ are less precise than the runtime analysis.
 | --- | --- | --- |
 | `storyEdits` | Insert dialogue, flag branches, and binary choices before an existing line | Clone the host script/page into expanded space, then resume the original line; Herb Picking arrival has mGBA coverage |
 | `openings["first-act"]` | Opening cast, dialogue, walking, facing, Goblin encounter, and continuation | Dedicated native-data compiler with fixed opening map/encounter/deployment templates |
-| `programs` | 31 editable named operations, typed expressions for all 114 opcodes, opaque preservation, dialogue insertion | Encoding and branch-boundary validation; general combinations still need gameplay validation |
+| `programs` | 32 editable named operations, typed expressions for all 114 opcodes, opaque preservation, dialogue insertion | Encoding and branch-boundary validation; general combinations still need gameplay validation |
 | `dialogue`, `pages`, `scenes` | Text/tokens, page cloning, new pages, scene-index links | Append resources; a new index entry does not register a map or mission trigger |
 | `battleEvents["snowball.goblin"]` | Save, inspect, and preview a damage-triggered event draft | Complete-ROM export is blocked; diagnostic probes are separate from production events |
 
@@ -183,7 +183,7 @@ All 114 instructions have [JSON descriptions](scene-vm-instructions.json), a
 [Lua expressions](scene-vm-examples.lua). The [VM reference](scene-vm.md#3-all-114-native-instructions)
 lists every handler's operands, wait status, usage, and evidence boundary.
 
-The existing 31 named editable operations remain available. For example:
+The existing 32 named editable operations remain available. For example:
 
 ```json
 {"operation":"setActorFacing","operands":{"actor":15,"facing":3}}
@@ -213,6 +213,7 @@ runtime interprets their bit patterns as signed coordinates.
 | `say` | textSelector:u8, speakerHandle:u8, presentationFlags:u8 |
 | `applySceneMode` | mode:u8 |
 | `setContextValue` | value:u8 |
+| `waitFrames16` | frames:u16 |
 | `setSceneRuntimeMode` | mode:u8 |
 | `adjustScriptOffset` | delta:i16 |
 | `setStoryFlag` | flag:u16, value:u8 |
@@ -267,7 +268,7 @@ count, total size, per-row opcode, and all opaque operand bytes. Editable named
 operands remain subject to validation. Unknown bytes cannot be rewritten and
 instructions cannot be added/removed to shift their layout.
 
-All 83 previously opaque opcodes also have typed JSON/Lua names, but lowering them
+All 82 previously opaque opcodes also have typed JSON/Lua names, but lowering them
 still produces opaque records and applies the same preservation rules. A semantic
 name does not bypass validation or inject patch opcodes/machine code.
 
@@ -375,6 +376,12 @@ victory/settlement acceptance is claimed. ROM/SAV/replay assets remain local.
 ## 中文摘要
 
 JSON 与受限 Lua 表达同一个项目模型，导出为原生场景数据。原生 VM 共 114 条指令；
-31 条沿用可编辑操作数，83 条提供可逆命名表达并保留原布局和字节保护。
+32 条沿用可编辑操作数，82 条提供可逆命名表达并保留原布局和字节保护。
 原版已有 `0x71` 菜单分支；当前选项只编译原版指令；B 取消进入第二路线。自定义指令保留但停用，不能设置任意 HP。
 以上文档区分编码范围、静态分析与游戏实测，不代表任意组合都已验证。
+
+## Native scene continuation and actor references
+
+See [Scene preview in the editor](scene-editor-preview.md) for `queueAfter(scene)`,
+`resume: "queuedScene"`, `borrowSceneActor` and `waitFrames16(frames)`, including
+the paired pub continuation example and native validation limits.

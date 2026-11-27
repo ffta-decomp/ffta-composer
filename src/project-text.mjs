@@ -8,6 +8,7 @@ const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const keywords = new Set('and break do else elseif end false for function goto if in local nil not or repeat return then true until while'.split(' '));
 
 const constructors = {
+  queueAfter: { fixed: { type: 'queueScene' }, fields: ['scene'], required: 1 },
   say: { fixed: { type: 'say' }, fields: ['text', 'speaker'], required: 1 },
   sayAs: { fixed: { type: 'say' }, fields: ['speaker', 'text'], required: 2 },
   when: { fixed: { type: 'if' }, fields: ['flag', 'then', 'else'], required: 2 },

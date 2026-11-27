@@ -85,6 +85,13 @@ function compileBeats(recipe, addLine, anchor, commands, profile, characterTable
         parts.push(say(node.text, speaker));
         continue;
       }
+      if (node?.type === 'queueScene') {
+        fields(node, ['type', 'scene'], [], 'scene queue step');
+        const bytes = Uint8Array.of(0x1c, 0, 0);
+        put16(bytes, 1, integer(node.scene, 1, PROFILE.index.expandableThrough, 'Queued scene'));
+        parts.push(bytes);
+        continue;
+      }
       if (node?.type === 'choose') {
         fields(node, ['type', 'prompt', 'first', 'second'], [], 'choice step');
         check(typeof node.prompt === 'string' && node.prompt.trim() && node.prompt.length <= 48 &&
@@ -148,7 +155,7 @@ export function lowerStoryEdits(rom, project) {
     symbol(name, 'story edit');
     fields(recipe, ['title', 'trigger', 'steps', 'resume'], ['flags', 'speakers', 'enemies'], 'story edit');
     check(typeof recipe.title === 'string' && recipe.title.trim() && recipe.title.length <= 80, 'Invalid story title');
-    check(recipe.resume === 'original', 'A story fragment must resume the native scene');
+    check(['original','queuedScene'].includes(recipe.resume), 'Invalid story continuation');
     fields(recipe.trigger, ['scene', 'beforeDialogue'], ['occurrence'], 'story trigger');
     const id = integer(recipe.trigger.scene, 1, PROFILE.index.count - 1, 'Native scene ID');
     const selector = integer(recipe.trigger.beforeDialogue, 0, 239, 'Native dialogue selector');
@@ -177,6 +184,14 @@ export function lowerStoryEdits(rom, project) {
     'Generated story resources cannot be referenced by direct edits');
     effective.pages[page] = { cloneFrom: sourcePage };
     effective.programs[key] = { cloneFrom: source };
+    if(recipe.resume==='queuedScene'){
+      const queued=recipe.steps.filter(step=>step.type==='queueScene');
+      check(queued.length===1&&project.scenes[queued[0].scene], 'Queued continuation requires one project-owned next scene');
+      const end=original.commands.at(-1);
+      check(end.operation==='setSceneRuntimeMode'&&[1,5,7].includes(end.operands.mode), 'Unsupported native scene exit for queued continuation');
+      effective.programs[key].instructions=original.commands.map(({offset,...command},i)=>
+        i===original.commands.length-1?{operation:'setSceneRuntimeMode',operands:{mode:2}}:command);
+    }
     effective.scenes[id] = { script: { group, program }, dialoguePage: page };
     let line = records.length;
     const compiled = compileBeats(recipe, lineData => {
