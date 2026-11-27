@@ -3110,7 +3110,7 @@
       "hex": "0x16",
       "length": 3,
       "handler": "0x08122e41",
-      "operation": "native",
+      "operation": "waitFrames16",
       "uses": 11,
       "programs": [
         "0/1",

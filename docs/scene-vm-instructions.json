@@ -628,8 +628,8 @@
         "114"
       ],
       "description": "Set the context +4 frame countdown from an unsigned halfword and wait, as in 15.",
-      "operation": "native",
-      "editing": "preserve-native-layout",
+      "operation": "waitFrames16",
+      "editing": "named",
       "jsonExample": {
         "operation": "waitFrames16",
         "operands": {

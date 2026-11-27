@@ -52,8 +52,8 @@ test('all 114 JSON descriptions and Lua functions share one encoding model', asy
     assert.throws(() => parseProjectText(`return {${row.name}(${row.fields.map(() => '0').concat('0').join(', ')})}`), /Too many arguments/);
     if (row.fields.length) assert.throws(() => parseProjectText(`return {${row.name}()}`), /Missing arguments/);
   }
-  assert.equal(descriptors.filter(row => row.editing === 'named').length, 31);
-  assert.equal(descriptors.filter(row => row.editing === 'preserve-native-layout').length, 83);
+  assert.equal(descriptors.filter(row => row.editing === 'named').length, 32);
+  assert.equal(descriptors.filter(row => row.editing === 'preserve-native-layout').length, 82);
 });
 
 const source = process.env.FFTA_US_ROM;

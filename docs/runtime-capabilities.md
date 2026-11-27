@@ -35,7 +35,7 @@ only the resource-pointer writes reproduces the complete original 16 MiB prefix.
 
 This is a diagnostic fixture, not a normal editor export: its deliberately
 replaced bytecode no longer agrees with the embedded authoring manifest. It does
-not loosen the production compiler's 83 opaque-instruction preservation guards.
+not loosen the production compiler's 82 opaque-instruction preservation guards.
 
 - Input: pinned US retail SHA-256
   `43fc8204c6dceee58828aebc7af0c72eb807e99f35ad641c8bb0a4fa8b6edc19`.

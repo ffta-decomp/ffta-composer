@@ -540,6 +540,10 @@ dialog::backdrop { background: #101f17ac; }
 .native-game-controls { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
 .native-game-controls button { min-width:46px; min-height:42px; touch-action:none; user-select:none; }
 .native-game-credit { display:block; color:var(--muted); margin-top:12px; }
+.scene-preview-setup { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+.scene-preview-stage { max-width:900px; min-height:200px; }
+.scene-preview-flow { color:var(--muted); font-size:.85rem; }
+.scene-preview-script { display:block; width:100%; min-height:320px; margin:12px 0; font:13px/1.5 ui-monospace,monospace; }
 #build-version { font-size:10px; opacity:.55; font-weight:400; margin-left:8px; }
 .simulation-message { position:absolute; top:12px; left:12px; right:12px; padding:10px 13px; background:#f5edc8ed; border-radius:5px; font-size:.87rem; }
 .simulation-flow { padding-left:15px; border-left:1px solid var(--line); min-width:0; }

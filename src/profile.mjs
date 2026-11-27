@@ -27,6 +27,7 @@ const byte = key => ({ key, size: 1 });
 const word = key => ({ key, size: 2 });
 
 export const OPERATIONS = {
+  0x16: ['waitFrames16', '等待指定帧数', [word('frames')]],
   0x06: ['fadeSceneBrightness', '场景亮度淡变', [byte('mode'), byte('frames'), byte('level')]],
   0x04: ['waitForActors', '等待角色动作完成', []],
   0x0c: ['loadSceneMap', '加载场景地图', [byte('map')]],

@@ -38,9 +38,18 @@ function compareKeys(a, b) {
   return a.localeCompare(b, 'en', { numeric: true });
 }
 
-function compileInstructions(commands, specs, original) {
+function compileInstructions(commands, specs, original, rom) {
   check(Array.isArray(commands) && commands.length > 0 && commands.length <= 32767, 'Invalid instruction list');
-  commands = commands.map(lowerVmInstruction);
+  commands = commands.map(command=>{
+    // Projects written before 0x16 had a named definition retain their raw form.
+    if(command?.operation==='native'&&command.opcode===0x16){
+      fields(command,['operation','opcode','operands'],'legacy frame wait');
+      check(Array.isArray(command.operands)&&command.operands.length===2,'Wrong native operand count');
+      const [low,high]=command.operands.map(value=>integer(value,0,255,'Native operand'));
+      return {operation:'waitFrames16',operands:{frames:low|(high<<8)}};
+    }
+    return lowerVmInstruction(command);
+  });
   const byName = new Map([...specs.values()].filter(spec => spec.operands).map(spec => [spec.operation, spec]));
   const offsets = new Set();
   const branches = [];
@@ -49,6 +58,18 @@ function compileInstructions(commands, specs, original) {
   const parts = commands.map((command, index) => {
     fields(command, ['operation', 'opcode', 'operands'], 'instruction');
     const { operation, operands } = command;
+    if(operation==='borrowSceneActor'){
+      check(command.opcode===undefined,'Actor references do not accept opcode overrides');
+      fields(operands,['scene','actor'],'actor reference');
+      const scene=rom.scenes[integer(operands.scene,1,233,'Source scene')];
+      const actor=integer(operands.actor,2,254,'Source actor');
+      check(scene?.script,'Actor source scene is unavailable');
+      const source=rom.programs.get(programKey(scene.script.group,scene.script.program));
+      const matches=source.commands.filter(c=>c.operation==='native'&&c.opcode===0x1f&&c.operands[0]===actor);
+      check(matches.length===1,'Actor reference requires one unchanged native creation instruction');
+      const bytes=rom.bytes.slice(source.offset+matches[0].offset,source.offset+matches[0].offset+6);
+      offsets.add(offset);offset+=bytes.length;return bytes;
+    }
     const spec = operation === 'native' ? specs.get(command.opcode) : byName.get(operation);
     check(spec && (operation !== 'native' || !spec.operands), `Invalid instruction at row ${index + 1}`);
     const bytes = new Uint8Array(spec.size);
@@ -140,7 +161,7 @@ export function plan(rom, project) {
     check(data.cloneFrom === undefined || source?.commands.length > 0, 'Clone source must be an executable retail program');
     const baseBytes = data.instructions === undefined && source
       ? rom.bytes.subarray(source.offset, source.end)
-      : compileInstructions(data.instructions, rom.specs, source);
+      : compileInstructions(data.instructions, rom.specs, source, rom);
     check(baseBytes.length > 0, 'Program cannot be empty');
     const commands = decodeInstructions(baseBytes, rom.specs);
     const blocks = authoredStories.blocks.get(key);
